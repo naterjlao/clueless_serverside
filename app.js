@@ -35,6 +35,7 @@ Socketio.on('connection', socket => {
 // From the messages recieved from the Backend,
 // we send the signal to the Client
 process.stdout.on('data', (data) => {
+	console.log(data);
     position = JSON.parse(data);
 	Socketio.emit('position',position);
 });
