@@ -1,5 +1,12 @@
-// TODO header
-
+/*
+##############################################################################
+# File: app.js
+# Author: Nate Lao (nlao1@jh.edu)
+# Created On: 3/31/2020
+# Description:
+#       Server Side MAIN script
+##############################################################################
+*/
 var Express = require('express');
 var app = Express();
 var Http = require('http').Server(app);
@@ -17,8 +24,8 @@ Http.listen(3000, '0.0.0.0', () => {
 
 // Initial Position -- TEMP
 var position = {
-	x: 200,
-	y: 200
+    x: 200,
+    y: 200
 }
 
 // When a signal is emmitted from the Client,
@@ -26,18 +33,18 @@ var position = {
 Socketio.on('connection', socket => {
     socket.emit('position', position);
     socket.on('move', data => {
-		// Digest data and send to the Backend
+        // Digest data and send to the Backend
         data = data.concat('\n');
-		backend.stdin.write(data);
+        backend.stdin.write(data);
     });
 });
 
 // From the messages recieved from the Backend,
 // we send the signal to the Client
 backend.stdout.on('data', (data) => {
-	console.log(data);
+    console.log(data);
     position = JSON.parse(data);
-	console.log(position);
-	Socketio.emit('position',position);
+    console.log(position);
+    Socketio.emit('position',position);
 });
 
