@@ -1,61 +1,41 @@
-const Express = require('express');
+// TODO header
+
+var Express = require('express');
 var app = Express();
-const Http = require('http').Server(app);
-const Socketio = require('socket.io')(Http);
-
-var position = {
-    x: 200,
-    y: 200
-};
-
-// THIS IS A TESTING AREA FOR PYTHON SPAWN
-console.log('spawning python listener')
+var Http = require('http').Server(app);
+var Socketio = require('socket.io')(Http);
 var spawn = require("child_process").spawn;
-// pass into argument upon initialization first argument is the script
-// TODO the path is hardcoded
-var process = spawn("python3",["/root/Clue-Less/server/python_test.py"]); 
-// please use python3 
-// Bind a listener on the python process to recieve incoming data from it
-// python -> nodejs
-process.stdout.on('data', (data) => {
-    console.log(`python returns ${data}`)
-});
-// END OF TESTING AREA
 
-// bind the port to everything: 0.0.0.0
-// listen on port: 3000
+// Spawn the Backend component
+console.log('spawning Backend main.py runner')
+var backend = spawn("python3",["/opt/clueless/src/backend/main.py"]); 
+
+// Listen at a port for commands from the Client
 Http.listen(3000, '0.0.0.0', () => {
     console.log('Listening at 0.0.0.0:3000...');
-    // log into a log file 
 });
 
+// Initial Position -- TEMP
+var position = {
+	x: 200,
+	y: 200
+}
+
+// When a signal is emmitted from the Client,
+// we send a signal to the Backend
 Socketio.on('connection', socket => {
     socket.emit('position', position);
     socket.on('move', data => {
-        switch(data) {
-            case 'left':
-                // write to python process concurrently
-                // nodejs -> python
-                process.stdin.write('left\n'); // we are sending a signal to process (THE NEWLINE IS NECESSARY)
-                position.x -= 5;
-                Socketio.emit('position', position);
-                break;
-            case 'right':
-                process.stdin.write('right\n'); // we are sending a signal to process (THE NEWLINE IS NECESSARY)
-                position.x += 5;
-                Socketio.emit('position', position);
-                break;
-            case 'up':
-                process.stdin.write('up\n'); // we are sending a signal to process (THE NEWLINE IS NECESSARY)
-                position.y -= 5;
-                Socketio.emit('position', position);
-                break;
-            case 'down':
-                process.stdin.write('down\n'); // we are sending a signal to process (THE NEWLINE IS NECESSARY)
-                position.y += 5;
-                Socketio.emit('position', position);
-                break;
-        }
+		// Digest data and send to the Backend
+        data = data.concat('\n');
+		backend.stdin.write(data);
     });
+});
+
+// From the messages recieved from the Backend,
+// we send the signal to the Client
+process.stdout.on('data', (data) => {
+    position = JSON.parse(data);
+	Socketio.emit('position',position);
 });
 
