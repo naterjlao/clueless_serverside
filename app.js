@@ -8,7 +8,7 @@ var spawn = require("child_process").spawn;
 
 // Spawn the Backend component
 console.log('spawning Backend main.py runner')
-var backend = spawn("python3",["/opt/clueless/src/backend/main.py"]); 
+var backend = spawn("python3",["/opt/clueless/src/backend/main.py"]);//,">","/opt/clueless/log/serverside.log"]); 
 
 // Listen at a port for commands from the Client
 Http.listen(3000, '0.0.0.0', () => {
