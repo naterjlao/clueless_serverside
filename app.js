@@ -1,70 +1,61 @@
-const Express = require('express')();
-const Http = require('http').Server(Express);
+const Express = require('express');
+var app = Express();
+const Http = require('http').Server(app);
 const Socketio = require('socket.io')(Http);
 
 var position = {
-    x: 100,
-    y: 100
+    x: 200,
+    y: 200
 };
 
-let players = [];
-let current_turn = 0;
+// THIS IS A TESTING AREA FOR PYTHON SPAWN
+console.log('spawning python listener')
+var spawn = require("child_process").spawn;
+// pass into argument upon initialization first argument is the script
+// TODO the path is hardcoded
+var process = spawn("python3",["/root/Clue-Less/server/python_test.py"]); 
+// please use python3 
+// Bind a listener on the python process to recieve incoming data from it
+// python -> nodejs
+process.stdout.on('data', (data) => {
+    console.log(`python returns ${data}`)
+});
+// END OF TESTING AREA
 
-Http.listen(3000, () => {
-    console.log('Listening at :3000...');
+// bind the port to everything: 0.0.0.0
+// listen on port: 3000
+Http.listen(3000, '0.0.0.0', () => {
+    console.log('Listening at 0.0.0.0:3000...');
+    // log into a log file 
 });
 
 Socketio.on('connection', socket => {
-    // a player has connected
-    console.log('player conncted');
-
-    // action upon player joining game
-    players.push(socket);
-
-    // action for changing which player's turn it is
-    socket.on('pass_turn',function(){
-        console.log('turn end attempt');
-        if(players[current_turn] == socket){
-            next_turn();
-        }
-        Socketio.emit('turnChange', current_turn); // emit to all clients
-    })
-
-    // for temporary block moving game play
     socket.emit('position', position);
     socket.on('move', data => {
-        if(players[current_turn] == socket) {
-            switch(data) {
-                case 'left':
-                    position.x -= 5;
-                    Socketio.emit('position', position);
-                    break;
-                case 'right':
-                    position.x += 5;
-                    Socketio.emit('position', position);
-                    break;
-                case 'up':
-                    position.y -= 5;
-                    Socketio.emit('position', position);
-                    break;
-                case 'down':
-                    position.y += 5;
-                    Socketio.emit('position', position);
-                    break;
-            }
+        switch(data) {
+            case 'left':
+                // write to python process concurrently
+                // nodejs -> python
+                process.stdin.write('left\n'); // we are sending a signal to process (THE NEWLINE IS NECESSARY)
+                position.x -= 5;
+                Socketio.emit('position', position);
+                break;
+            case 'right':
+                process.stdin.write('right\n'); // we are sending a signal to process (THE NEWLINE IS NECESSARY)
+                position.x += 5;
+                Socketio.emit('position', position);
+                break;
+            case 'up':
+                process.stdin.write('up\n'); // we are sending a signal to process (THE NEWLINE IS NECESSARY)
+                position.y -= 5;
+                Socketio.emit('position', position);
+                break;
+            case 'down':
+                process.stdin.write('down\n'); // we are sending a signal to process (THE NEWLINE IS NECESSARY)
+                position.y += 5;
+                Socketio.emit('position', position);
+                break;
         }
-    });
-
-    // action for when a player disconnects from the game
-    socket.on('disconnect', function() {
-        console.log('A player disconnected');
-        players.splice(players.indexOf(socket), 1);
-        console.log("number of players now ", players.length);
     });
 });
 
-function next_turn() {
-    current_turn = (current_turn + 1) % players.length;
-    players[current_turn].emit('your_turn');
-    console.log("next turn triggered " , current_turn);
-}
