@@ -1,10 +1,11 @@
 /*
 ##############################################################################
-# File: app.js
+# File: main.js
 # Author: Nate Lao (nlao1@jh.edu)
 # Created On: 3/31/2020
 # Description:
-#       Server Side MAIN script
+#       ServerSide main script for ingesting and returning JSON messages
+#       between the Client interface (FrontEnd) and the game logic (Backend)
 ##############################################################################
 */
 var Express = require('express');
