@@ -8,30 +8,54 @@
 #       between the Client interface (FrontEnd) and the game logic (Backend)
 ##############################################################################
 */
-var Express = require('express');
-var app = Express();
-var Http = require('http').Server(app);
-var Socketio = require('socket.io')(Http);
+
+/******************************************************************************
+* GLOBAL CONSTANTS
+******************************************************************************/
+const LISTENER_PY = "/opt/clueless/src/serverside/listener.py"
+
+/******************************************************************************
+* SETUP THE NETWORK CONFIGURATION
+******************************************************************************/
+log('SETTING UP NETWORK CONFIGURATION...');
+var express = require('express');
+var app = express();
+var http = require('http').Server(app);
+var clientSocket = require('socket.io')(http);
 var spawn = require("child_process").spawn;
+log('NETWORK CONFIGURATION ESTABLISHED...');
 
-// Spawn the Backend component
-console.log('spawning Backend main.py runner')
-var backend = spawn("python3",["/opt/clueless/src/backend/main.py"]);//,">","/opt/clueless/log/serverside.log"]); 
+/******************************************************************************
+* SPAWN PYTHON LISTENER
+******************************************************************************/
+log('SPAWNING PYTHON LISTENER THREAD...');
+var backend = spawn("python3",[LISTENER_PY]); // TODO send output of spawn to log
+log('PYTHON LISTENER THREAD SPAWNED');
 
-// Listen at a port for commands from the Client
-Http.listen(3000, '0.0.0.0', () => {
-    console.log('Listening at 0.0.0.0:3000...');
+/******************************************************************************
+* AUXILIARY FUNCTIONS
+******************************************************************************/
+/* Log wrapper */
+function log(message) {
+	// TODO send to a log file
+	console.log(message)
+}
+
+
+/******************************************************************************
+* MAIN FUNCTIONS
+******************************************************************************/
+
+/* Call the http listener */
+http.listen(3000, '0.0.0.0', () => { // TODO need configuration call
+    log('Listening at 0.0.0.0:3000...');
 });
 
-// Initial Position -- TEMP
-var position = {
-    x: 200,
-    y: 200
-}
+/*
 
 // When a signal is emmitted from the Client,
 // we send a signal to the Backend
-Socketio.on('connection', socket => {
+clientSocket.on('connection', socket => {
     socket.emit('position', position);
     socket.on('move', data => {
         // Digest data and send to the Backend
@@ -46,6 +70,7 @@ backend.stdout.on('data', (data) => {
     console.log(data);
     position = JSON.parse(data);
     console.log(position);
-    Socketio.emit('position',position);
+    clientSocket.emit('position',position);
 });
 
+*/
