@@ -15,8 +15,13 @@ Http.listen(3000, () => {
 });
 
 Socketio.on('connection', socket => {
-    // a player has connected
+    socket.join('player' + players.length);
+	// a player has connected
     console.log('player conncted');
+    console.log("current_turn is:" + current_turn);    
+    players.forEach(socket => console.log(socket.rooms));
+    console.log("==============================================");
+    console.log(socket.rooms);
 
     // action upon player joining game
     players.push(socket);
@@ -24,7 +29,7 @@ Socketio.on('connection', socket => {
     // action for changing which player's turn it is
     socket.on('pass_turn',function(){
         console.log('turn end attempt');
-        if(players[current_turn] == socket){
+        if(socket.rooms['player' + current_turn]){
             next_turn();
         }
         Socketio.emit('turnChange', current_turn); // emit to all clients
@@ -33,7 +38,9 @@ Socketio.on('connection', socket => {
     // for temporary block moving game play
     socket.emit('position', position);
     socket.on('move', data => {
-        if(players[current_turn] == socket) {
+	    console.log(socket.rooms);
+	    console.log(('player' + current_turn) in socket.rooms);
+        if(socket.rooms['player' + current_turn]) {
             switch(data) {
                 case 'left':
                     position.x -= 5;
