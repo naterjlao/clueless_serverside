@@ -13,11 +13,12 @@
 * GLOBAL CONSTANTS
 ******************************************************************************/
 const BACKEND_WRAPPER = "/opt/clueless/src/serverside/listener.py";
+const DEBUG = true
 
 /******************************************************************************
 * IMPORTS
 ******************************************************************************/
-const crypto = require('crypto);
+const crypto = require('crypto');
 
 /******************************************************************************
 * SETUP THE NETWORK CONFIGURATION
@@ -52,13 +53,17 @@ players = [];
 ******************************************************************************/
 /* Log wrapper */
 function log(message) {
-	// TODO send to a log file
+	// TODO send to a log file for the Server to Clients ClientX to Server
 	console.log(message);
 }
 
 /* Hashes the player to generate an ID string for each Player */
 function createPlayerID(player) {
 	// TODO - this might not work
+	// TODO --TESTING
+	console.log("SOCKETDUMP:");
+	console.log(player);
+	
 	console.log(String(player)); // TESTING
 	
 	return crypto.createHash('sha1').update(player).digest('hex');
@@ -76,11 +81,12 @@ function addPlayer(player) {
 /* Returns the Player that is associated with the PlayerID */
 function getPlayer(playerID) {
 	target = null;
-	for each (player in players) {
+	// i hate javascript
+	players.forEach(player => {
 		if (player.playerID == playerID) {
 			target = player;
 		}
-	}
+	});
 	return target;
 }
 
@@ -158,7 +164,7 @@ mainSocket.on('connection', player => {
 	player.on('pass_turn', () => {
 		sendToBackend(player.playerID,'pass_turn',null);
 	});
-};
+});
 /*
 
 // When a signal is emmitted from the Client,
