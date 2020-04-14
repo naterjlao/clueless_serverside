@@ -58,15 +58,38 @@ function log(message) {
 }
 
 /* Hashes the player to generate an ID string for each Player */
+function createPlayerIDAux(socket_data) {
+	target_key = "remoteAddress";
+	playerID = null;
+	for (var key in socket_data) {
+		if (key == target_key) {
+			playerID = socket_data[key];
+			break;
+		}
+		if (socket_data[key].constructor == Object) {
+			playerID = createPlayerIDAux(socket_data[key]);
+		}
+	}
+	return playerID;
+}
+
 function createPlayerID(player) {
 	// TODO - this might not work
 	// TODO --TESTING
 	console.log("SOCKETDUMP:");
 	console.log(player);
 	
+	
+	// RECURSIVE PROGRAMMING HELL YEAH!
+	playerID = null;
+
+	
+	console.log("PLAYER IP");
+	console.log(playerID);
+	
 	console.log(String(player)); // TESTING
 	
-	return crypto.createHash('sha1').update(player).digest('hex');
+	return playerID;
 }
 
 /* Adds a Player to the list of Players */
