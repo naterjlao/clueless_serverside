@@ -57,17 +57,19 @@ function log(message) {
 	console.log(message);
 }
 
-/* Hashes the player to generate an ID string for each Player */
-function createPlayerIDAux(socket_data) {
-	target_key = "remoteAddress";
+/* Recursively finds the Player's IP based on the socket input object */
+function findPlayerIP(player) {
 	playerID = null;
-	for (var key in socket_data) {
-		if (key == target_key) {
-			playerID = socket_data[key];
+	for (var key in player) {
+		if (key == "address") {
+			playerID = player[key];
 			break;
 		}
-		if (socket_data[key].constructor == Object) {
-			playerID = createPlayerIDAux(socket_data[key]);
+		if (player[key] != undefined && player[key].constructor == Object) {
+			playerID = findPlayerIP(player[key]);
+			if (playerID != null) {
+				break;
+			}
 		}
 	}
 	return playerID;
@@ -79,11 +81,8 @@ function createPlayerID(player) {
 	console.log("SOCKETDUMP:");
 	console.log(player);
 	
-	
-	// RECURSIVE PROGRAMMING HELL YEAH!
-	playerID = null;
+	playerID = findPlayerIP(player); // TODO -- one thing to consider, there might be more than one player within a private network
 
-	
 	console.log("PLAYER IP");
 	console.log(playerID);
 	
