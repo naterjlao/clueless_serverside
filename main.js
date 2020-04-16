@@ -12,7 +12,7 @@
 /******************************************************************************
 * GLOBAL CONSTANTS
 ******************************************************************************/
-const BACKEND_WRAPPER = "/opt/clueless/src/serverside/listener.py";
+const BACKEND_WRAPPER = "/opt/clueless/src/backend/listener.py";
 const DEBUG = true
 
 /******************************************************************************
@@ -133,7 +133,7 @@ function sendToBackend(playerID,eventName,sendData) {
 		};
 	}
 	signal = JSON.stringify(signal);	// absolutely necessary
-	signal.concat('\n');				// also absolutely necessary
+	signal = signal.concat('\n');		// also absolutely necessary
 	backend.stdin.write(signal);		// Spit out to stdin!
 }
 
