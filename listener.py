@@ -175,7 +175,7 @@ if __name__ == "__main__": # Safeguard against accidental imports
                 position["y"] = position["y"] - 5
             if payload["direction"] == "down":
                 position["y"] = position["y"] + 5
-            sendToAll('move',position)
+            sendToAll('move',{"position":position})
             
         elif event == "make_suggestion":
             pass
