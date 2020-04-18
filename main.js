@@ -59,7 +59,7 @@ playerIDidx = 0
 /* Log wrapper */
 function log(message) {
 	// TODO send to a log file for the Server to Clients ClientX to Server
-	if (debug == true) {
+	if (DEBUG == true) {
 		console.log(message);
 	}
 }
@@ -201,8 +201,6 @@ mainSocket.on('connection', player => {
 	
 	player.on('entered_game', () => {
 		log("recieved entered_game signal");
-		log("data: ");
-		log(data);
 		sendToBackend(player.playerId,'entered_game',null);
 	});
 	
@@ -301,7 +299,7 @@ mainSocket.on('connection', player => {
 		sendToBackend(player.playerId,'select_suspect',data);
 	});
 
-	player.on('disconnect', (null) => {
+	player.on('disconnect', () => {
 		log("recieved disconnect signal");
 		removePlayer(player)
 		sendToBackend(player.playerId,'disconnect',null);
