@@ -83,7 +83,7 @@ function log(message,type=GENERAL_LOG) {
 	if (DEBUG == true) {
 		console.log(message);
 	}
-	
+
 	fs.appendFileSync((LOG_DIR+GENERAL_LOG),(timestamp()+'\t'+message+'\n'));
 	if (type != GENERAL_LOG) {
 		fs.appendFileSync((LOG_DIR+type),(timestamp()+'\t'+message+'\n'));
@@ -125,16 +125,16 @@ function createPlayerID(player) {
 	//log("PLAYER IP");
 	//log(playerId);
 	//log(String(player)); // TESTING
-	
+
 	playerId = playerIds[playerIDidx];
 	playerIDidx = (playerIDidx + 1) % playerIds.length; // TODO this is a band aid
-	
+
 	log("CREATED PLAYER ID: ".concat(playerId));
-	
+
 	return playerId;
 }
 
-/* 
+/*
 	Does a bunch of stuff:
 	- Creates a unique playerId for the given player
 	- Associates a field within player (ie. player.playerId)
@@ -143,12 +143,12 @@ function createPlayerID(player) {
 */
 function addPlayer(player) {
 	player.playerId = createPlayerID(player);
-	
+
 	log("ADDING PLAYER: ".concat(player.playerId));
-	
+
 	player.join(playerId);   // the player is joined in a "room" named after the playerId
 	players.push(player);    // add the player to player list
-	
+
 	log("ADDED PLAYER: ".concat(player.playerId));
 }
 
@@ -168,7 +168,7 @@ function getPlayer(playerId) {
 /* Removes the Player from the Server */
 function removePlayer(player) {
 	log("REMOVING PLAYER: ".concat(player.playerId));
-	
+
 	player.leave(player.playerId);
 }
 
@@ -196,7 +196,7 @@ http.listen(HTTP_PORT, URL_WILDCARD, () => { // TODO need configuration call
 * Backend -> Server
 ******************************************************************************/
 
-/* Listens for whatever the Backend spits out 
+/* Listens for whatever the Backend spits out
 *  Note that this is continuous, any info flushed from the Backend stdout is
 *  processed through here.
 */
@@ -207,12 +207,12 @@ backend.stdout.on('data', (data) => {
 	data.toString().split("\n").forEach( chunk => {
 		/* Disregard empty strings */
 		if (chunk.length > 0) {
-			
+
 			log("<<< START OF BACKEND RAW DATA >>>");
 			log(chunk);
 			log("<<< END OF BACKEND RAW DATA >>>");
 			log("LENGTH OF PARSING STRING=".concat(chunk.length));
-			
+
 			/* Parse the chunk into a dictionary object */
 			signal = JSON.parse(chunk);
 			log(">>> SENDING SIGNAL TO: ".concat(signal.playerId.toString()),OUTGOING_SIGNAL_LOG);
@@ -222,15 +222,15 @@ backend.stdout.on('data', (data) => {
 				log(JSON.stringify(signal.payload),OUTGOING_SIGNAL_LOG);
 				log("<<< END OF SIGNAL PAYLOAD >>>",OUTGOING_SIGNAL_LOG);
 			}
-						
+
 			/* Send out the signal depending on the playerId tag */
-			
+
 			// Send to a specified player
 			if (signal.playerId != "all") {
 				player = getPlayer(signal.playerId);
 				player.emit(signal.eventName,signal.payload);
 			}
-			
+
 			// Send to all of the players
 			else {
 				mainSocket.emit(signal.eventName,signal.payload);
@@ -247,7 +247,7 @@ backend.stdout.on('data', (data) => {
 	When the server connects to anybody, so these thing.
 */
 mainSocket.on('connection', player => {
-	
+
 	/*
 		This bit does a bunch of stuff under the hood:
 		- Creates a unique playerId for the given player
@@ -256,18 +256,18 @@ mainSocket.on('connection', player => {
 		- Adds it to the Server's Players list so that they can be tagged and sold to the blackmarket.
 	*/
 	addPlayer(player);
-	
+
 	/**************************************************************************
 		Create the event handlers to link up the Front to the Backend listener.
 		These are tied to the SENDER functions in the server.service.ts component
 		in the Frontend subsystem.
 	**************************************************************************/
-	
+
 	player.on('entered_game', () => {
 		log("RECIEVED entered_game SIGNAL",INCOMING_SIGNAL_LOG);
 		sendToBackend(player.playerId,'entered_game',null);
 	});
-	
+
 	player.on('start_game', (data) => {
 		/* data format:
 		  {
@@ -278,10 +278,10 @@ mainSocket.on('connection', player => {
 		log(">>> START OF PAYLOAD DATA <<<",INCOMING_SIGNAL_LOG);
 		log(JSON.stringify(data),INCOMING_SIGNAL_LOG);
 		log(">>> END OF PAYLOAD DATA <<<",INCOMING_SIGNAL_LOG);
-		
+
 		sendToBackend(player.playerId,'start_game',data);
 	});
-	
+
 	player.on('move', (data) => {
 		/* data format:
 		  {
@@ -293,10 +293,10 @@ mainSocket.on('connection', player => {
 		log(">>> START OF PAYLOAD DATA <<<",INCOMING_SIGNAL_LOG);
 		log(JSON.stringify(data),INCOMING_SIGNAL_LOG);
 		log(">>> END OF PAYLOAD DATA <<<",INCOMING_SIGNAL_LOG);
-		
+
 		sendToBackend(player.playerId,'move',data);
 	});
-	
+
 
 	player.on('make_suggestion', (data) => {
 		/* data format:
@@ -311,10 +311,10 @@ mainSocket.on('connection', player => {
 		log(">>> START OF PAYLOAD DATA <<<",INCOMING_SIGNAL_LOG);
 		log(JSON.stringify(data),INCOMING_SIGNAL_LOG);
 		log(">>> END OF PAYLOAD DATA <<<",INCOMING_SIGNAL_LOG);
-		
+
 		sendToBackend(player.playerId,'make_suggestion',data);
 	});
-	
+
 	player.on('make_accusation', (data) => {
 		/* data format:
 		  {
@@ -328,7 +328,7 @@ mainSocket.on('connection', player => {
 		log(">>> START OF PAYLOAD DATA <<<",INCOMING_SIGNAL_LOG);
 		log(JSON.stringify(data),INCOMING_SIGNAL_LOG);
 		log(">>> END OF PAYLOAD DATA <<<",INCOMING_SIGNAL_LOG);
-		
+
 		sendToBackend(player.playerId,'make_accusation',data);
 	});
 
@@ -342,10 +342,10 @@ mainSocket.on('connection', player => {
 		log(">>> START OF PAYLOAD DATA <<<",INCOMING_SIGNAL_LOG);
 		log(JSON.stringify(data),INCOMING_SIGNAL_LOG);
 		log(">>> END OF PAYLOAD DATA <<<",INCOMING_SIGNAL_LOG);
-		
+
 		sendToBackend(player.playerId,'pass_turn',data);
 	});
-	
+
 	player.on('make_move', (data) => {
 		/* data format:
 		  {
@@ -358,28 +358,28 @@ mainSocket.on('connection', player => {
 		log(">>> START OF PAYLOAD DATA <<<",INCOMING_SIGNAL_LOG);
 		log(JSON.stringify(data),INCOMING_SIGNAL_LOG);
 		log(">>> END OF PAYLOAD DATA <<<",INCOMING_SIGNAL_LOG);
-		
+
 		sendToBackend(player.playerId,'make_move',data);
 	});
 
-	player.on('select_suspect', (data) => {
+	player.on('select_character', (data) => {
 		/* data format:
 		  {
 			playerId: string,
-			suspect: string
+			character: string
 		  }
 		*/
-		log("RECIEVED select_suspect SIGNAL",INCOMING_SIGNAL_LOG);
+		log("RECIEVED select_character SIGNAL",INCOMING_SIGNAL_LOG);
 		log(">>> START OF PAYLOAD DATA <<<",INCOMING_SIGNAL_LOG);
 		log(JSON.stringify(data),INCOMING_SIGNAL_LOG);
 		log(">>> END OF PAYLOAD DATA <<<",INCOMING_SIGNAL_LOG);
-		
-		sendToBackend(player.playerId,'select_suspect',data);
+
+		sendToBackend(player.playerId,'select_character',data);
 	});
 
 	player.on('disconnect', () => {
 		log("RECIEVED disconnect SIGNAL",INCOMING_SIGNAL_LOG);
-		
+
 		removePlayer(player)
 		sendToBackend(player.playerId,'disconnect',null);
 	});
