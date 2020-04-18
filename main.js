@@ -163,16 +163,29 @@ http.listen(3000, '0.0.0.0', () => { // TODO need configuration call
 *  processed through here.
 */
 backend.stdout.on('data', (data) => {
-    signal = JSON.parse(data);
-	// Spit to an individual player
-	if (signal.playerId != "all") {
-		player = getPlayer(signal.playerId);
-		player.emit(signal.eventName,signal.payload);
-	}
-	// Spit to all of the players!
-	else {
-		mainSocket.emit(signal.eventName,signal.payload);
-	}
+	/* We take the raw output from the listener thread and split it into managable
+	*  chunks using delimited newlines.
+	*/
+	data.toString().split("\n").forEach( chunk => {
+		log("<<< PARSING FROM BACKEND >>>");
+		log(chunk);
+		log("<<< END OF PARSING >>>");
+		log("LENGTH OF PARSING STRING=".concat(chunk.length));
+		
+		// Diregard empty strings
+		if (chunk.length > 0) {
+			signal = JSON.parse(chunk);
+			// Spit to an individual player
+			if (signal.playerId != "all") {
+				player = getPlayer(signal.playerId);
+				player.emit(signal.eventName,signal.payload);
+			}
+			// Spit to all of the players!
+			else {
+				mainSocket.emit(signal.eventName,signal.payload);
+			}
+		}
+	});
 });
 
 /******************************************************************************
