@@ -16,12 +16,12 @@ import json
 #          The JSON data that is sent to the ServerSide must be in the following
 #          format:
 #          {
-#               playerID: "all" or <playerID>,
+#               playerId: "all" or <playerId>,
 #               event: <string>,
 #               payload: {}
 #          }
 #          Where:
-#              -playerID : the target player ID string to be sent
+#              -playerId : the target player ID string to be sent
 #              -event : the string action that corresponds to the event
 #                           signature expected by the player
 #              -payload : a dictionary (JSON) to sent to the player(s)
@@ -30,19 +30,19 @@ import json
 #          The JSON data that is sent to the Backend (this) is expected to be in 
 #          the following format:
 #          {
-#               playerID: <playerID>,
+#               playerId: <playerId>,
 #               event: <string>,
 #               payload: {}
 #          }
 #          Where:
-#              -playerID : the player ID that sent the signal
+#              -playerId : the player ID that sent the signal
 #              -event : the string action that corresponds to the event
 #                           signature made by the player
 #              -payload : a dictionary (JSON) to sent to the player(s)
 #
 ################################################################################
 
-PLAYER_ID = 'playerID'
+PLAYER_ID = 'playerId'
 EVENT = 'event' # TODO use 'event' (name is redundant)
 PAYLOAD = 'payload'
 
@@ -51,10 +51,10 @@ PAYLOAD = 'payload'
 ################################################################################
 
 # Shoots <sendData> for the <event> to Serverside for the lucky Client
-# that is associated with <playerID>
-def sendToPlayer(playerID,event,sendData):
+# that is associated with <playerId>
+def sendToPlayer(playerId,event,sendData):
     signal = {
-        PLAYER_ID : playerID,
+        PLAYER_ID : playerId,
         EVENT     : event,
         PAYLOAD   : sendData
         }
@@ -73,7 +73,7 @@ def nextTurn(): # TODO
 ################################################################################
 
 # Stores the player IDs that sent the request
-playerIDs = []
+playerIds = []
 
 #### TODO --- THIS IS TEMPORARY replace with actual game objects ----- #######
 # Create variables that is stored at runtime for this process
