@@ -162,7 +162,7 @@ if __name__ == "__main__": # Safeguard against accidental imports
 			
 			# We add a player in the Game and return a gamestate JSON
 			game.add_player(playerId)
-			sendToAll('gamestate',game.get_gamestateJSON())
+			sendToAll('gamestate',game.get_gamestateDict())
 			
 		elif event == "start_game":
 			pass
