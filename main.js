@@ -1,6 +1,7 @@
 /*
 ##############################################################################
 # File: main.js
+# Language: Javascript
 # Author: Nate Lao (nlao1@jh.edu)
 # Created On: 3/31/2020
 # Description:
@@ -12,13 +13,20 @@
 /******************************************************************************
 * GLOBAL CONSTANTS
 ******************************************************************************/
-const BACKEND_WRAPPER = "/opt/clueless/src/serverside/listener.py";
-const DEBUG = true
+const HTTP_PORT           = 3000                // TODO refer to config file
+const URL_WILDCARD        = '0.0.0.0'           // TODO refer to config file
+const LOG_DIR             = '/opt/clueless/log/'
+const GENERAL_LOG         = 'serverside.log';
+const INCOMING_SIGNAL_LOG = 'incoming.log';
+const OUTGOING_SIGNAL_LOG = 'outgoing.log';
+const BACKEND_WRAPPER     = '/opt/clueless/src/serverside/listener.py';
+const DEBUG               = true
 
 /******************************************************************************
 * IMPORTS
 ******************************************************************************/
 const crypto = require('crypto');
+const fs = require('fs')
 
 /******************************************************************************
 * SETUP THE NETWORK CONFIGURATION
@@ -54,15 +62,37 @@ playerIds = ["redBoi","greenBoi","blueBoi","orangeGurl","yellowBoi","magentaBoi"
 playerIDidx = 0
 
 /******************************************************************************
-* AUXILIARY FUNCTIONS
+* LOGGING
 ******************************************************************************/
-/* Log wrapper */
-function log(message) {
-	// TODO send to a log file for the Server to Clients ClientX to Server
+function timestamp() {
+	var tardis, timestamp;
+	tardis = new Date();
+	timestamp = tardis.getFullYear()+'-'+(tardis.getMonth()+1)+'-'+tardis.getDate()+' ';
+	timestamp+= tardis.getHours()+':'+tardis.getMinutes()+':'+tardis.getSeconds()+':';
+	return timestamp
+}
+
+/*  Log wrapper
+	Generates log message in the server console and to the log files in LOG_DIR.
+	- Timestamps are recorded in log files.
+	- By default, <type> is set to GENERAL_LOG.
+	- If an another <type> is specified (i.e. INCOMING_SIGNAL_LOG or OUTGOING_SIGNAL_LOG),
+		the function will log to GENERAL_LOG and the given <type>.
+*/
+function log(message,type=GENERAL_LOG) {
 	if (DEBUG == true) {
 		console.log(message);
 	}
+	
+	fs.appendFileSync((LOG_DIR+type),(timestamp()+'\t'+message+'\n'));
+	if (type != GENERAL_LOG) {
+		fs.appendFileSync((LOG_DIR+type),(timestamp()+'\t'+message+'\n'));
+	}
 }
+
+/******************************************************************************
+* AUXILIARY FUNCTIONS
+******************************************************************************/
 
 /* Recursively finds the Player's IP based on the socket input object */
 // NOTE - sooo this works, but there's implied issues with this bit
@@ -98,7 +128,9 @@ function createPlayerID(player) {
 	
 	playerId = playerIds[playerIDidx];
 	playerIDidx = (playerIDidx + 1) % playerIds.length; // TODO this is a band aid
-	log("Creating player ID: ".concat(playerId));
+	
+	log("CREATED PLAYER ID: ".concat(playerId));
+	
 	return playerId;
 }
 
@@ -111,9 +143,13 @@ function createPlayerID(player) {
 */
 function addPlayer(player) {
 	player.playerId = createPlayerID(player);
-	log("ServerSide: adding player ".concat(player.playerId));
+	
+	log("ADDING PLAYER: ".concat(player.playerId));
+	
 	player.join(playerId);   // the player is joined in a "room" named after the playerId
 	players.push(player);    // add the player to player list
+	
+	log("ADDED PLAYER: ".concat(player.playerId));
 }
 
 /* Returns the Player that is associated with the PlayerID */
@@ -131,6 +167,8 @@ function getPlayer(playerId) {
 
 /* Removes the Player from the Server */
 function removePlayer(player) {
+	log("REMOVING PLAYER: ".concat(player.playerId));
+	
 	player.leave(player.playerId);
 }
 
@@ -150,8 +188,8 @@ function sendToBackend(playerId,eventName,payload) {
 * MAIN FUNCTIONS
 ******************************************************************************/
 /* Call the http listener */
-http.listen(3000, '0.0.0.0', () => { // TODO need configuration call
-	log('Listening at 0.0.0.0:3000...');
+http.listen(HTTP_PORT, URL_WILDCARD, () => { // TODO need configuration call
+	log('SERVER LISTENING FOR CLIENTS: '+URL_WILDCARD+':'+HTTP_PORT);
 });
 
 /******************************************************************************
@@ -177,11 +215,13 @@ backend.stdout.on('data', (data) => {
 			
 			/* Parse the chunk into a dictionary object */
 			signal = JSON.parse(chunk);
-			log(">>> SENDING SIGNAL TO: ".concat(signal.playerId.toString()));
-			log(">>> EVENT SIGNATURE: ".concat(signal.eventName.toString()));
-			log("<<< START OF SIGNAL PAYLOAD >>>");
-			log(signal.payload.toString());
-			log("<<< END OF SIGNAL PAYLOAD >>>");
+			log(">>> SENDING SIGNAL TO: ".concat(signal.playerId.toString()),OUTGOING_SIGNAL_LOG);
+			log(">>> EVENT SIGNATURE: ".concat(signal.eventName.toString()),OUTGOING_SIGNAL_LOG);
+			if (signal.payload.constructor == Object) {
+				log("<<< START OF SIGNAL PAYLOAD >>>",OUTGOING_SIGNAL_LOG);
+				log(JSON.stringify(signal.payload));
+				log("<<< END OF SIGNAL PAYLOAD >>>",OUTGOING_SIGNAL_LOG);
+			}
 						
 			/* Send out the signal depending on the playerId tag */
 			
@@ -224,7 +264,7 @@ mainSocket.on('connection', player => {
 	**************************************************************************/
 	
 	player.on('entered_game', () => {
-		log("recieved entered_game signal");
+		log("RECIEVED entered_game SIGNAL",INCOMING_SIGNAL_LOG);
 		sendToBackend(player.playerId,'entered_game',null);
 	});
 	
@@ -234,9 +274,11 @@ mainSocket.on('connection', player => {
 			playerId: string
 		  }
 		*/
-		log("recieved start_game signal");
-		log("data: ");
-		log(data);
+		log("RECIEVED start_game SIGNAL",INCOMING_SIGNAL_LOG);
+		log(">>> START OF PAYLOAD DATA <<<",INCOMING_SIGNAL_LOG);
+		log(data,INCOMING_SIGNAL_LOG);
+		log(">>> END OF PAYLOAD DATA <<<",INCOMING_SIGNAL_LOG);
+		
 		sendToBackend(player.playerId,'start_game',data);
 	});
 	
@@ -247,9 +289,11 @@ mainSocket.on('connection', player => {
 			direction: string
 		  }
 		*/
-		log("recieved move signal");
-		log("data: ");
-		log(data);
+		log("RECIEVED move SIGNAL",INCOMING_SIGNAL_LOG);
+		log(">>> START OF PAYLOAD DATA <<<",INCOMING_SIGNAL_LOG);
+		log(data,INCOMING_SIGNAL_LOG);
+		log(">>> END OF PAYLOAD DATA <<<",INCOMING_SIGNAL_LOG);
+		
 		sendToBackend(player.playerId,'move',data);
 	});
 	
@@ -263,9 +307,11 @@ mainSocket.on('connection', player => {
 			room: string
 		  }
 		*/
-		log("recieved make_suggestion signal");
-		log("data: ");
-		log(data);
+		log("RECIEVED make_suggestion SIGNAL",INCOMING_SIGNAL_LOG);
+		log(">>> START OF PAYLOAD DATA <<<",INCOMING_SIGNAL_LOG);
+		log(data,INCOMING_SIGNAL_LOG);
+		log(">>> END OF PAYLOAD DATA <<<",INCOMING_SIGNAL_LOG);
+		
 		sendToBackend(player.playerId,'make_suggestion',data);
 	});
 	
@@ -278,9 +324,11 @@ mainSocket.on('connection', player => {
 			room: string
 		  }
 		*/
-		log("recieved make_accusation signal");
-		log("data: ");
-		log(data);
+		log("RECIEVED make_accusation SIGNAL",INCOMING_SIGNAL_LOG);
+		log(">>> START OF PAYLOAD DATA <<<",INCOMING_SIGNAL_LOG);
+		log(data,INCOMING_SIGNAL_LOG);
+		log(">>> END OF PAYLOAD DATA <<<",INCOMING_SIGNAL_LOG);
+		
 		sendToBackend(player.playerId,'make_accusation',data);
 	});
 
@@ -290,9 +338,11 @@ mainSocket.on('connection', player => {
 				playerId: string
 			}
 		*/
-		log("recieved pass_turn signal");
-		log("data: ");
-		log(data);
+		log("RECIEVED pass_turn SIGNAL",INCOMING_SIGNAL_LOG);
+		log(">>> START OF PAYLOAD DATA <<<",INCOMING_SIGNAL_LOG);
+		log(data,INCOMING_SIGNAL_LOG);
+		log(">>> END OF PAYLOAD DATA <<<",INCOMING_SIGNAL_LOG);
+		
 		sendToBackend(player.playerId,'pass_turn',data);
 	});
 	
@@ -304,9 +354,11 @@ mainSocket.on('connection', player => {
 			room: string
 		  }
 		*/
-		log("recieved make_move signal");
-		log("data: ");
-		log(data);
+		log("RECIEVED make_move SIGNAL",INCOMING_SIGNAL_LOG);
+		log(">>> START OF PAYLOAD DATA <<<",INCOMING_SIGNAL_LOG);
+		log(data,INCOMING_SIGNAL_LOG);
+		log(">>> END OF PAYLOAD DATA <<<",INCOMING_SIGNAL_LOG);
+		
 		sendToBackend(player.playerId,'make_move',data);
 	});
 
@@ -317,14 +369,17 @@ mainSocket.on('connection', player => {
 			suspect: string
 		  }
 		*/
-		log("recieved select_suspect signal");
-		log("data: ");
-		log(data);
+		log("RECIEVED select_suspect SIGNAL",INCOMING_SIGNAL_LOG);
+		log(">>> START OF PAYLOAD DATA <<<",INCOMING_SIGNAL_LOG);
+		log(data,INCOMING_SIGNAL_LOG);
+		log(">>> END OF PAYLOAD DATA <<<",INCOMING_SIGNAL_LOG);
+		
 		sendToBackend(player.playerId,'select_suspect',data);
 	});
 
 	player.on('disconnect', () => {
-		log("recieved disconnect signal");
+		log("RECIEVED disconnect SIGNAL",INCOMING_SIGNAL_LOG);
+		
 		removePlayer(player)
 		sendToBackend(player.playerId,'disconnect',null);
 	});
