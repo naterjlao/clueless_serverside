@@ -84,7 +84,7 @@ function log(message,type=GENERAL_LOG) {
 		console.log(message);
 	}
 	
-	fs.appendFileSync((LOG_DIR+type),(timestamp()+'\t'+message+'\n'));
+	fs.appendFileSync((LOG_DIR+GENERAL_LOG),(timestamp()+'\t'+message+'\n'));
 	if (type != GENERAL_LOG) {
 		fs.appendFileSync((LOG_DIR+type),(timestamp()+'\t'+message+'\n'));
 	}
@@ -219,7 +219,7 @@ backend.stdout.on('data', (data) => {
 			log(">>> EVENT SIGNATURE: ".concat(signal.eventName.toString()),OUTGOING_SIGNAL_LOG);
 			if (signal.payload.constructor == Object) {
 				log("<<< START OF SIGNAL PAYLOAD >>>",OUTGOING_SIGNAL_LOG);
-				log(JSON.stringify(signal.payload));
+				log(JSON.stringify(signal.payload),OUTGOING_SIGNAL_LOG);
 				log("<<< END OF SIGNAL PAYLOAD >>>",OUTGOING_SIGNAL_LOG);
 			}
 						
@@ -276,7 +276,7 @@ mainSocket.on('connection', player => {
 		*/
 		log("RECIEVED start_game SIGNAL",INCOMING_SIGNAL_LOG);
 		log(">>> START OF PAYLOAD DATA <<<",INCOMING_SIGNAL_LOG);
-		log(data,INCOMING_SIGNAL_LOG);
+		log(JSON.stringify(data),INCOMING_SIGNAL_LOG);
 		log(">>> END OF PAYLOAD DATA <<<",INCOMING_SIGNAL_LOG);
 		
 		sendToBackend(player.playerId,'start_game',data);
@@ -291,7 +291,7 @@ mainSocket.on('connection', player => {
 		*/
 		log("RECIEVED move SIGNAL",INCOMING_SIGNAL_LOG);
 		log(">>> START OF PAYLOAD DATA <<<",INCOMING_SIGNAL_LOG);
-		log(data,INCOMING_SIGNAL_LOG);
+		log(JSON.stringify(data),INCOMING_SIGNAL_LOG);
 		log(">>> END OF PAYLOAD DATA <<<",INCOMING_SIGNAL_LOG);
 		
 		sendToBackend(player.playerId,'move',data);
@@ -309,7 +309,7 @@ mainSocket.on('connection', player => {
 		*/
 		log("RECIEVED make_suggestion SIGNAL",INCOMING_SIGNAL_LOG);
 		log(">>> START OF PAYLOAD DATA <<<",INCOMING_SIGNAL_LOG);
-		log(data,INCOMING_SIGNAL_LOG);
+		log(JSON.stringify(data),INCOMING_SIGNAL_LOG);
 		log(">>> END OF PAYLOAD DATA <<<",INCOMING_SIGNAL_LOG);
 		
 		sendToBackend(player.playerId,'make_suggestion',data);
@@ -326,7 +326,7 @@ mainSocket.on('connection', player => {
 		*/
 		log("RECIEVED make_accusation SIGNAL",INCOMING_SIGNAL_LOG);
 		log(">>> START OF PAYLOAD DATA <<<",INCOMING_SIGNAL_LOG);
-		log(data,INCOMING_SIGNAL_LOG);
+		log(JSON.stringify(data),INCOMING_SIGNAL_LOG);
 		log(">>> END OF PAYLOAD DATA <<<",INCOMING_SIGNAL_LOG);
 		
 		sendToBackend(player.playerId,'make_accusation',data);
@@ -340,7 +340,7 @@ mainSocket.on('connection', player => {
 		*/
 		log("RECIEVED pass_turn SIGNAL",INCOMING_SIGNAL_LOG);
 		log(">>> START OF PAYLOAD DATA <<<",INCOMING_SIGNAL_LOG);
-		log(data,INCOMING_SIGNAL_LOG);
+		log(JSON.stringify(data),INCOMING_SIGNAL_LOG);
 		log(">>> END OF PAYLOAD DATA <<<",INCOMING_SIGNAL_LOG);
 		
 		sendToBackend(player.playerId,'pass_turn',data);
@@ -356,7 +356,7 @@ mainSocket.on('connection', player => {
 		*/
 		log("RECIEVED make_move SIGNAL",INCOMING_SIGNAL_LOG);
 		log(">>> START OF PAYLOAD DATA <<<",INCOMING_SIGNAL_LOG);
-		log(data,INCOMING_SIGNAL_LOG);
+		log(JSON.stringify(data),INCOMING_SIGNAL_LOG);
 		log(">>> END OF PAYLOAD DATA <<<",INCOMING_SIGNAL_LOG);
 		
 		sendToBackend(player.playerId,'make_move',data);
@@ -371,7 +371,7 @@ mainSocket.on('connection', player => {
 		*/
 		log("RECIEVED select_suspect SIGNAL",INCOMING_SIGNAL_LOG);
 		log(">>> START OF PAYLOAD DATA <<<",INCOMING_SIGNAL_LOG);
-		log(data,INCOMING_SIGNAL_LOG);
+		log(JSON.stringify(data),INCOMING_SIGNAL_LOG);
 		log(">>> END OF PAYLOAD DATA <<<",INCOMING_SIGNAL_LOG);
 		
 		sendToBackend(player.playerId,'select_suspect',data);
