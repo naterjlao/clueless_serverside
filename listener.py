@@ -149,10 +149,18 @@ if __name__ == "__main__": # Safeguard against accidental imports
 		# position
 		# turnChange
 		
-		# Game functions that return a json string:
-		# start_game
-		# make_move
-		# end_turn
+		# Interface game functions from Server.py
+		# Game(self)
+		# Game.get_gamestateDict()
+		# Game.add_player(name)
+		# Game.start_game()
+		# Game.end_game()
+		# Game.make_move(name, suspect, room)
+		# Game.select_suspect(name, suspect)
+		# Game.make_suggestion(name, suspect, weapon, room)
+		# Game.respond_suggestion(player, card)
+		# Game.make_accusation(name, suspect, weapon, room)
+		# Game.end_turn(name)
 		
 		# TODO this is ugly and slow as hell, could use a hash or something
 		if event == "entered_game":
@@ -162,10 +170,11 @@ if __name__ == "__main__": # Safeguard against accidental imports
 			
 			# We add a player in the Game and return a gamestate JSON
 			game.add_player(playerId)
-			sendToAll('gamestate',game.get_gamestateDict())
 			
 		elif event == "start_game":
-			pass
+			# We start the game and return the gamestate signal
+			game.start_game(playerId)
+			sendToAll('gamestate',game.get_gamestateDict())
 			
 		elif event == "move":
 			# TODO This whole thing might be temp
