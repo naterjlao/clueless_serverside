@@ -173,7 +173,8 @@ if __name__ == "__main__": # Safeguard against accidental imports
 			
 		elif event == "start_game":
 			game.start_game()
-			
+		
+		# THIS IS TEMPORARY
 		elif event == "move":
 			# TODO This whole thing might be temp
 			# Fun fact, python3 does not support switches
@@ -186,7 +187,7 @@ if __name__ == "__main__": # Safeguard against accidental imports
 			if payload["direction"] == "down":
 				position["y"] = position["y"] + 5
 			sendToAll('position',{"position":position})
-			
+		
 		elif event == "make_suggestion":
 			game.make_suggestion(payload["playerId"],payload["suspect"],payload["weapon"],payload["room"])
 			
@@ -199,10 +200,8 @@ if __name__ == "__main__": # Safeguard against accidental imports
 		elif event == "make_move":
 			game.make_move(payload["playerId"],payload["suspect"],payload["room"])
 			
-		elif event == "select_suspect":
-			pass
-			# TODO not implemented in the frontend
-			#game.select_suspect(payload["name"],payload["suspect"])
+		elif event == "select_character":
+			game.select_suspect(payload["playerId"],payload["suspect"])
 			
 		elif event == "disconnect":
 			game.end_game()
