@@ -151,7 +151,7 @@ function sendToBackend(playerId,eventName,payload) {
 ******************************************************************************/
 /* Call the http listener */
 http.listen(3000, '0.0.0.0', () => { // TODO need configuration call
-    log('Listening at 0.0.0.0:3000...');
+	log('Listening at 0.0.0.0:3000...');
 });
 
 /******************************************************************************
@@ -167,20 +167,31 @@ backend.stdout.on('data', (data) => {
 	*  chunks using delimited newlines.
 	*/
 	data.toString().split("\n").forEach( chunk => {
-		log("<<< PARSING FROM BACKEND >>>");
-		log(chunk);
-		log("<<< END OF PARSING >>>");
-		log("LENGTH OF PARSING STRING=".concat(chunk.length));
-		
-		// Diregard empty strings
+		/* Disregard empty strings */
 		if (chunk.length > 0) {
+			
+			log("<<< START OF BACKEND RAW DATA >>>");
+			log(chunk);
+			log("<<< END OF BACKEND RAW DATA >>>");
+			log("LENGTH OF PARSING STRING=".concat(chunk.length));
+			
+			/* Parse the chunk into a dictionary object */
 			signal = JSON.parse(chunk);
-			// Spit to an individual player
+			log(">>> SENDING SIGNAL TO: ".concat(signal.playerId.toString()));
+			log(">>> EVENT SIGNATURE: ".concat(signal.eventName.toString()));
+			log("<<< START OF SIGNAL PAYLOAD >>>");
+			log(signal.payload.toString());
+			log("<<< END OF SIGNAL PAYLOAD >>>");
+						
+			/* Send out the signal depending on the playerId tag */
+			
+			// Send to a specified player
 			if (signal.playerId != "all") {
 				player = getPlayer(signal.playerId);
 				player.emit(signal.eventName,signal.payload);
 			}
-			// Spit to all of the players!
+			
+			// Send to all of the players
 			else {
 				mainSocket.emit(signal.eventName,signal.payload);
 			}
@@ -245,13 +256,13 @@ mainSocket.on('connection', player => {
 
 	player.on('make_suggestion', (data) => {
 		/* data format:
-          {
-            playerId: string,
-            suspect: string,
-            weapon: string,
-            room: string
-          }
-        */
+		  {
+			playerId: string,
+			suspect: string,
+			weapon: string,
+			room: string
+		  }
+		*/
 		log("recieved make_suggestion signal");
 		log("data: ");
 		log(data);
@@ -260,13 +271,13 @@ mainSocket.on('connection', player => {
 	
 	player.on('make_accusation', (data) => {
 		/* data format:
-          {
-            playerId: string,
-            suspect: string,
-            weapon: string,
-            room: string
-          }
-        */
+		  {
+			playerId: string,
+			suspect: string,
+			weapon: string,
+			room: string
+		  }
+		*/
 		log("recieved make_accusation signal");
 		log("data: ");
 		log(data);

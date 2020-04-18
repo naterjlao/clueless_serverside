@@ -67,12 +67,14 @@ DEBUG = True
 # Shoots <sendData> for the <event> in Serverside to the lucky Client
 # that is associated with <playerId>
 def sendToPlayer(playerId,event,sendData):
+    # Prepare the data to transfer to the Serverside
     signal = {
         PLAYER_ID : playerId,
         EVENT     : event,
         PAYLOAD   : sendData
         }
-    print(json.dumps(signal).replace("'",'"'),flush=True) # Spit out to stdout!
+    # Data is sent to the Serverside using stdout file IO
+    print(json.dumps(signal).replace("'",'"'),flush=True)
 
 # Shoots <sendData> for the <event> to Serverside for all Clients
 def sendToAll(event,sendData):
@@ -122,7 +124,7 @@ if __name__ == "__main__": # Safeguard against accidental imports
         signal = json.loads(signal) # data is coverted to a dictionary
         
         ########################################################################
-        # Strip out the metadata
+        # Strip out the metadata from the given RAW signal
         ########################################################################
         playerId = signal[PLAYER_ID]
         event = signal[EVENT]
