@@ -97,7 +97,7 @@ function createPlayerID(player) {
 	//log(String(player)); // TESTING
 	
 	playerId = playerIds[playerIDidx];
-	playerIDidx = playerIDidx + 1;
+	playerIDidx = (playerIDidx + 1) % playerIds.length; // TODO this is a band aid
 	log("Creating player ID: ".concat(playerId));
 	return playerId;
 }

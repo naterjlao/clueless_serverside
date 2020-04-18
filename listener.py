@@ -64,7 +64,7 @@ DEBUG = True
 # AUXILIARY FUNCTIONS
 ################################################################################
 
-# Shoots <sendData> for the <event> to Serverside for the lucky Client
+# Shoots <sendData> for the <event> in Serverside to the lucky Client
 # that is associated with <playerId>
 def sendToPlayer(playerId,event,sendData):
     signal = {
@@ -92,7 +92,7 @@ playerIds = []
 #### TODO --- THIS IS TEMPORARY replace with actual game objects ----- #######
 # Create variables that is stored at runtime for this process
 position = {"x":100,"y":100}
-current_turn = 0 # start at the first player
+current_turn = "redBoi" # set to the ID of the first Player entered
 #### TODO --- THIS IS TEMPORARY replace with actual game objects ----- #######
 
 
@@ -112,7 +112,7 @@ if __name__ == "__main__": # Safeguard against accidental imports
     
         # TODO -- there is a case where there might be conflicting signals at the same time,
         # TODO -- might need to implement an input buffer to handle these cases.
-        # TODO -- worst case, multithreading might be needed
+        # TODO -- absolute worst case, multithreading might be needed
     
         ########################################################################
         # Get the RAW signal from the ServerSide
@@ -129,7 +129,8 @@ if __name__ == "__main__": # Safeguard against accidental imports
         payload = signal[PAYLOAD]
         
         
-        # Events
+        # Event Signal Signatures
+        
         # << FRONT -> BACK >>
         # entered_game
         # start_game
@@ -141,20 +142,40 @@ if __name__ == "__main__": # Safeguard against accidental imports
         # select_suspect
         # disconnect
         
+        # << BACK -> FRONT >>
+        # startInfo
+        # position
+        # turnChange
+        
         # Game functions that return a json string:
         # start_game
         # make_move
         # end_turn
         
-        # TODO ugly as hell, could use a hash function or something
+        # TODO this is ugly and slow as hell, could use a hash or something
         if event == "entered_game":
-            pass
+            sendToPlayer(playerId,'startInfo',{"player":playerId})
+            sendToAll("turnChange",{"turn":current_turn})
+            sendToPlayer(playerId,"position",{"position":position})
+            
+            # TODO
+            game.add_player(playerId)
             
         elif event == "start_game":
             pass
             
         elif event == "move":
-            pass
+            # TODO This whole thing might be temp
+            # Fun fact, python3 does not support switches
+            if payload["direction"] == "left":
+                position["x"] = position["x"] - 5
+            if payload["direction"] == "right":
+                position["x"] = position["x"] + 5
+            if payload["direction"] == "up":
+                position["y"] = position["y"] - 5
+            if payload["direction"] == "down":
+                position["y"] = position["y"] + 5
+            sendToAll('move',position)
             
         elif event == "make_suggestion":
             pass
@@ -164,44 +185,17 @@ if __name__ == "__main__": # Safeguard against accidental imports
         
         elif event == "pass_turn":
             pass
+            ''' TODO
+            if (current_turn == playerId):
+                current_turn = game
+            '''
         
         elif event == "make_move":
             pass
             
         elif event == "select_suspect":
-            pass
+            game.select_suspect(playerId,payload["suspect"])
             
         elif event == "disconnect":
             pass
             
-            
-            
-        '''
-        ########## NOTE -- these might be temporary!!!! ##########
-        # NOTE -- THESE CORRESPOND TO THE CLIENT -> SERVER event SIGNATURE in server.service.ts (frontend)
-        # Handler for enteredGame()
-        if data[EVENT] == "enteredGame":
-            pass
-            
-        # Handler for move()
-        elif data[EVENT] == "move":
-            if data[PAYLOAD] == "left":
-                position["x"] = position["x"] - 5
-            if data[PAYLOAD] == "right":
-                position["x"] = position["x"] + 5
-            if data[PAYLOAD] == "up":
-                position["y"] = position["y"] - 5
-            if data[PAYLOAD] == "down":
-                position["y"] = position["y"] + 5
-            sendToAll('move',position)
-                
-        # Handler for endTurn()
-        elif data[EVENT] == "pass_turn":
-            pass
-        
-        # Handler for removeSocket()
-        elif data[EVENT] == "disconnect":
-            pass
-        
-        ########## NOTE -- these might be temporary!!!! ##########
-        '''
