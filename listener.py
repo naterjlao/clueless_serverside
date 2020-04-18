@@ -172,9 +172,7 @@ if __name__ == "__main__": # Safeguard against accidental imports
 			game.add_player(playerId)
 			
 		elif event == "start_game":
-			# We start the game and return the gamestate signal
-			game.start_game(playerId)
-			sendToAll('gamestate',game.get_gamestateDict())
+			game.start_game()
 			
 		elif event == "move":
 			# TODO This whole thing might be temp
@@ -190,24 +188,23 @@ if __name__ == "__main__": # Safeguard against accidental imports
 			sendToAll('position',{"position":position})
 			
 		elif event == "make_suggestion":
-			pass
+			game.make_suggestion(payload["playerId"],payload["suspect"],payload["weapon"],payload["room"])
 			
 		elif event == "make_accusation":
-			pass
+			game.make_suggestion(payload["playerId"],payload["suspect"],payload["weapon"],payload["room"])
 		
 		elif event == "pass_turn":
-			pass
-			''' TODO
-			if (current_turn == playerId):
-				current_turn = game
-			'''
+			game.end_turn(payload["playerId"])
 		
 		elif event == "make_move":
-			pass
+			game.make_move(payload["playerId"],payload["suspect"],payload["room"])
 			
 		elif event == "select_suspect":
-			game.select_suspect(playerId,payload["suspect"])
+			pass
+			# TODO not implemented in the frontend
+			#game.select_suspect(payload["name"],payload["suspect"])
 			
 		elif event == "disconnect":
-			pass
+			game.end_game()
 			
+		sendToAll('gamestate',game.get_gamestateDict())
