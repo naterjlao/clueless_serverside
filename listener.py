@@ -67,23 +67,23 @@ DEBUG = True
 # Shoots <sendData> for the <event> in Serverside to the lucky Client
 # that is associated with <playerId>
 def sendToPlayer(playerId,event,sendData):
-    # Prepare the data to transfer to the Serverside
-    signal = {
-        PLAYER_ID : playerId,
-        EVENT     : event,
-        PAYLOAD   : sendData
-        }
-    # Data is sent to the Serverside using stdout file IO
-    print(json.dumps(signal).replace("'",'"'),flush=True)
+	# Prepare the data to transfer to the Serverside
+	signal = {
+		PLAYER_ID : playerId,
+		EVENT     : event,
+		PAYLOAD   : sendData
+		}
+	# Data is sent to the Serverside using stdout file IO
+	print(json.dumps(signal).replace("'",'"'),flush=True)
 
 # Shoots <sendData> for the <event> to Serverside for all Clients
 def sendToAll(event,sendData):
-    sendToPlayer("all",event,sendData)
+	sendToPlayer("all",event,sendData)
 
 # TODO this might be temporary
 def nextTurn(): # TODO
-    pass
-    
+	pass
+	
 ################################################################################
 # INSTANCE VARIABLES
 ################################################################################
@@ -104,101 +104,101 @@ current_turn = "redBoi" # set to the ID of the first Player entered
 if __name__ == "__main__": # Safeguard against accidental imports
 
 
-    ################################################################################
-    # GENERATE THE GAME INSTANCE
-    ################################################################################
-    game = Game()
+	################################################################################
+	# GENERATE THE GAME INSTANCE
+	################################################################################
+	game = Game()
 
-    # Spinup a listener, this will be killed when the Serverside application is killed
-    while True:
-    
-        # TODO -- there is a case where there might be conflicting signals at the same time,
-        # TODO -- might need to implement an input buffer to handle these cases.
-        # TODO -- absolute worst case, multithreading might be needed
-    
-        ########################################################################
-        # Get the RAW signal from the ServerSide
-        ########################################################################
-        signal = input()
-        signal = signal.strip()
-        signal = json.loads(signal) # data is coverted to a dictionary
-        
-        ########################################################################
-        # Strip out the metadata from the given RAW signal
-        ########################################################################
-        playerId = signal[PLAYER_ID]
-        event = signal[EVENT]
-        payload = signal[PAYLOAD]
-        
-        
-        # Event Signal Signatures
-        
-        # << FRONT -> BACK >>
-        # entered_game
-        # start_game
-        # move
-        # make_suggestion
-        # make_accusation
-        # pass_turn
-        # make_move
-        # select_suspect
-        # disconnect
-        
-        # << BACK -> FRONT >>
-        # startInfo
-        # position
-        # turnChange
-        
-        # Game functions that return a json string:
-        # start_game
-        # make_move
-        # end_turn
-        
-        # TODO this is ugly and slow as hell, could use a hash or something
-        if event == "entered_game":
-            sendToPlayer(playerId,'startInfo',{"player":playerId})
-            sendToAll("turnChange",{"turn":current_turn})
-            sendToPlayer(playerId,"position",{"position":position})
-            
-            # We add a player in the Game and return a gamestate JSON
-            game.add_player(playerId)
-            sendToAll('gamestate',game.get_gamestateJSON())
-            
-        elif event == "start_game":
-            pass
-            
-        elif event == "move":
-            # TODO This whole thing might be temp
-            # Fun fact, python3 does not support switches
-            if payload["direction"] == "left":
-                position["x"] = position["x"] - 5
-            if payload["direction"] == "right":
-                position["x"] = position["x"] + 5
-            if payload["direction"] == "up":
-                position["y"] = position["y"] - 5
-            if payload["direction"] == "down":
-                position["y"] = position["y"] + 5
-            sendToAll('position',{"position":position})
-            
-        elif event == "make_suggestion":
-            pass
-            
-        elif event == "make_accusation":
-            pass
-        
-        elif event == "pass_turn":
-            pass
-            ''' TODO
-            if (current_turn == playerId):
-                current_turn = game
-            '''
-        
-        elif event == "make_move":
-            pass
-            
-        elif event == "select_suspect":
-            game.select_suspect(playerId,payload["suspect"])
-            
-        elif event == "disconnect":
-            pass
-            
+	# Spinup a listener, this will be killed when the Serverside application is killed
+	while True:
+	
+		# TODO -- there is a case where there might be conflicting signals at the same time,
+		# TODO -- might need to implement an input buffer to handle these cases.
+		# TODO -- absolute worst case, multithreading might be needed
+	
+		########################################################################
+		# Get the RAW signal from the ServerSide
+		########################################################################
+		signal = input()
+		signal = signal.strip()
+		signal = json.loads(signal) # data is coverted to a dictionary
+		
+		########################################################################
+		# Strip out the metadata from the given RAW signal
+		########################################################################
+		playerId = signal[PLAYER_ID]
+		event = signal[EVENT]
+		payload = signal[PAYLOAD]
+		
+		
+		# Event Signal Signatures
+		
+		# << FRONT -> BACK >>
+		# entered_game
+		# start_game
+		# move
+		# make_suggestion
+		# make_accusation
+		# pass_turn
+		# make_move
+		# select_suspect
+		# disconnect
+		
+		# << BACK -> FRONT >>
+		# startInfo
+		# position
+		# turnChange
+		
+		# Game functions that return a json string:
+		# start_game
+		# make_move
+		# end_turn
+		
+		# TODO this is ugly and slow as hell, could use a hash or something
+		if event == "entered_game":
+			sendToPlayer(playerId,'startInfo',{"player":playerId})
+			sendToAll("turnChange",{"turn":current_turn})
+			sendToPlayer(playerId,"position",{"position":position})
+			
+			# We add a player in the Game and return a gamestate JSON
+			game.add_player(playerId)
+			sendToAll('gamestate',game.get_gamestateJSON())
+			
+		elif event == "start_game":
+			pass
+			
+		elif event == "move":
+			# TODO This whole thing might be temp
+			# Fun fact, python3 does not support switches
+			if payload["direction"] == "left":
+				position["x"] = position["x"] - 5
+			if payload["direction"] == "right":
+				position["x"] = position["x"] + 5
+			if payload["direction"] == "up":
+				position["y"] = position["y"] - 5
+			if payload["direction"] == "down":
+				position["y"] = position["y"] + 5
+			sendToAll('position',{"position":position})
+			
+		elif event == "make_suggestion":
+			pass
+			
+		elif event == "make_accusation":
+			pass
+		
+		elif event == "pass_turn":
+			pass
+			''' TODO
+			if (current_turn == playerId):
+				current_turn = game
+			'''
+		
+		elif event == "make_move":
+			pass
+			
+		elif event == "select_suspect":
+			game.select_suspect(playerId,payload["suspect"])
+			
+		elif event == "disconnect":
+			pass
+			
