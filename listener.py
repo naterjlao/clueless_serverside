@@ -160,8 +160,9 @@ if __name__ == "__main__": # Safeguard against accidental imports
             sendToAll("turnChange",{"turn":current_turn})
             sendToPlayer(playerId,"position",{"position":position})
             
-            # TODO
+            # We add a player in the Game and return a gamestate JSON
             game.add_player(playerId)
+            sendToAll('gamestate',game.get_gamestateJSON())
             
         elif event == "start_game":
             pass
