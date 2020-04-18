@@ -1,7 +1,4 @@
 #!/usr/bin/python3
-
-# TODO import
-import json
 ################################################################################
 # File: clueless
 # Language: python3
@@ -42,9 +39,26 @@ import json
 #
 ################################################################################
 
+
+################################################################################
+# IMPORT STUFF FROM THE BACKEND TO LINK UP THE APPLICATION
+################################################################################
+import json
+import sys
+sys.path.append('/opt/clueless/src/backend')
+from Server import Game
+
+################################################################################
+# STATIC GLOBAL VARIABLES
+################################################################################
 PLAYER_ID = 'playerId'
-EVENT = 'event' # TODO use 'event' (name is redundant)
+EVENT = 'eventName' # NOTE - Javascript has 'event' as a reserved keyword!
 PAYLOAD = 'payload'
+
+################################################################################
+# DEBUG
+################################################################################
+DEBUG = True
 
 ################################################################################
 # AUXILIARY FUNCTIONS
@@ -86,6 +100,13 @@ current_turn = 0 # start at the first player
 # MAIN
 ################################################################################
 if __name__ == "__main__": # Safeguard against accidental imports
+
+
+    ################################################################################
+    # GENERATE THE GAME INSTANCE
+    ################################################################################
+    game = Game()
+
     # Spinup a listener, this will be killed when the Serverside application is killed
     while True:
     
@@ -93,11 +114,69 @@ if __name__ == "__main__": # Safeguard against accidental imports
         # TODO -- might need to implement an input buffer to handle these cases.
         # TODO -- worst case, multithreading might be needed
     
-        # Raw signal from the ServerSide
-        recieve = input()
-        recieve = recieve.strip()
-        data = json.loads(recieve) # data is coverted to a dictionary
+        ########################################################################
+        # Get the RAW signal from the ServerSide
+        ########################################################################
+        signal = input()
+        signal = signal.strip()
+        signal = json.loads(signal) # data is coverted to a dictionary
         
+        ########################################################################
+        # Strip out the metadata
+        ########################################################################
+        playerId = signal[PLAYER_ID]
+        event = signal[EVENT]
+        payload = signal[PAYLOAD]
+        
+        
+        # Events
+        # << FRONT -> BACK >>
+        # entered_game
+        # start_game
+        # move
+        # make_suggestion
+        # make_accusation
+        # pass_turn
+        # make_move
+        # select_suspect
+        # disconnect
+        
+        # Game functions that return a json string:
+        # start_game
+        # make_move
+        # end_turn
+        
+        # TODO ugly as hell, could use a hash function or something
+        if event == "entered_game":
+            pass
+            
+        elif event == "start_game":
+            pass
+            
+        elif event == "move":
+            pass
+            
+        elif event == "make_suggestion":
+            pass
+            
+        elif event == "make_accusation":
+            pass
+        
+        elif event == "pass_turn":
+            pass
+        
+        elif event == "make_move":
+            pass
+            
+        elif event == "select_suspect":
+            pass
+            
+        elif event == "disconnect":
+            pass
+            
+            
+            
+        '''
         ########## NOTE -- these might be temporary!!!! ##########
         # NOTE -- THESE CORRESPOND TO THE CLIENT -> SERVER event SIGNATURE in server.service.ts (frontend)
         # Handler for enteredGame()
@@ -123,7 +202,6 @@ if __name__ == "__main__": # Safeguard against accidental imports
         # Handler for removeSocket()
         elif data[EVENT] == "disconnect":
             pass
-            
-        data = None
         
         ########## NOTE -- these might be temporary!!!! ##########
+        '''

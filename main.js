@@ -12,7 +12,7 @@
 /******************************************************************************
 * GLOBAL CONSTANTS
 ******************************************************************************/
-const BACKEND_WRAPPER = "/opt/clueless/src/backend/listener.py";
+const BACKEND_WRAPPER = "/opt/clueless/src/serverside/listener.py";
 const DEBUG = true
 
 /******************************************************************************
@@ -44,9 +44,14 @@ log('PYTHON LISTENER THREAD SPAWNED');
 
 /*
 	Stores the socket object for each player.
-	Every element has an associated playerID
+	Every element has an associated playerId
 */
 players = [];
+/*
+	Funny names for the geek. TODO this is temporary because testing at same localhost
+*/
+playerIds = ["redBoi","greenBoi","blueBoi","orangeGurl","yellowBoi","magentaBoi","transparentBoi"]
+playerIDidx = 0
 
 /******************************************************************************
 * AUXILIARY FUNCTIONS
@@ -54,58 +59,70 @@ players = [];
 /* Log wrapper */
 function log(message) {
 	// TODO send to a log file for the Server to Clients ClientX to Server
-	console.log(message);
+	if (debug == true) {
+		console.log(message);
+	}
 }
 
 /* Recursively finds the Player's IP based on the socket input object */
+// NOTE - sooo this works, but there's implied issues with this bit
 function findPlayerIP(player) {
-	playerID = null;
+	playerId = null;
 	for (var key in player) {
 		if (key == "address") {
-			playerID = player[key];
+			playerId = player[key];
 			break;
 		}
 		if (player[key] != undefined && player[key].constructor == Object) {
-			playerID = findPlayerIP(player[key]);
-			if (playerID != null) {
+			playerId = findPlayerIP(player[key]);
+			if (playerId != null) {
 				break;
 			}
 		}
 	}
-	return playerID;
+	return playerId;
 }
 
+/*
+	Creates a player ID. Do I really have to spell it out?
+*/
 function createPlayerID(player) {
 	// TODO - this might not work
 	// TODO --TESTING
-	console.log("SOCKETDUMP:");
-	console.log(player);
+	//log("SOCKETDUMP:");
+	//log(player);
+	//playerId = findPlayerIP(player); // TODO -- one thing to consider, there might be more than one player within a private network
+	//log("PLAYER IP");
+	//log(playerId);
+	//log(String(player)); // TESTING
 	
-	playerID = findPlayerIP(player); // TODO -- one thing to consider, there might be more than one player within a private network
-
-	console.log("PLAYER IP");
-	console.log(playerID);
-	
-	console.log(String(player)); // TESTING
-	
-	return playerID;
+	playerId = playerIds[playerIDidx];
+	playerIDidx = playerIDidx + 1;
+	log("Creating player ID: ".concat(playerId));
+	return playerId;
 }
 
-/* Adds a Player to the list of Players */
+/* 
+	Does a bunch of stuff:
+	- Creates a unique playerId for the given player
+	- Associates a field within player (ie. player.playerId)
+	- Have the Player join the server in a "room" (for individual player updates)
+	- Adds it to the Server's Players list so that they can be tagged and sold to the blackmarket.
+*/
 function addPlayer(player) {
-	hash = createPlayerID(player);
-	player.playerID = hash;
-	console.log("ServerSide: adding player ".concat(hash));
-	player.join(playerID);   // the player is joined in a "room" named after the playerID
+	player.playerId = createPlayerID(player);
+	log("ServerSide: adding player ".concat(player.playerId));
+	player.join(playerId);   // the player is joined in a "room" named after the playerId
 	players.push(player);    // add the player to player list
 }
 
 /* Returns the Player that is associated with the PlayerID */
-function getPlayer(playerID) {
+function getPlayer(playerId) {
 	target = null;
-	// i hate javascript
+	// I hate javascript, I have to create a GD function
+	// in order to do simple for loop...
 	players.forEach(player => {
-		if (player.playerID == playerID) {
+		if (player.playerId == playerId) {
 			target = player;
 		}
 	});
@@ -114,24 +131,16 @@ function getPlayer(playerID) {
 
 /* Removes the Player from the Server */
 function removePlayer(player) {
-	player.leave(player.playerID);
+	player.leave(player.playerId);
 }
 
 /* Shoots a signal to the backend listener */
-function sendToBackend(playerID,eventName,sendData) {
-	if (sendData == null) {
-		signal = {
-			'playerID' : playerID,
-			'eventName': eventName
-		};
-	}
-	else {
-		signal = {
-			'playerID' : playerID,
+function sendToBackend(playerId,eventName,payload) {
+	signal = {
+			'playerId' : playerId,
 			'eventName': eventName,
-			'payload'  : sendData
+			'payload'  : payload
 		};
-	}
 	signal = JSON.stringify(signal);	// absolutely necessary
 	signal = signal.concat('\n');		// also absolutely necessary
 	backend.stdin.write(signal);		// Spit out to stdin!
@@ -156,8 +165,8 @@ http.listen(3000, '0.0.0.0', () => { // TODO need configuration call
 backend.stdout.on('data', (data) => {
     signal = JSON.parse(data);
 	// Spit to an individual player
-	if (signal.playerID != "all") {
-		player = getPlayer(signal.playerID);
+	if (signal.playerId != "all") {
+		player = getPlayer(signal.playerId);
 		player.emit(signal.eventName,signal.payload);
 	}
 	// Spit to all of the players!
@@ -170,43 +179,131 @@ backend.stdout.on('data', (data) => {
 * Client -> Server
 ******************************************************************************/
 
-// TODO this might be temporary
+/*
+	When the server connects to anybody, so these thing.
+*/
 mainSocket.on('connection', player => {
 	
-	// Add the player to the players list and have them join
+	/*
+		This bit does a bunch of stuff under the hood:
+		- Creates a unique playerId for the given player
+		- Associates a field within player (ie. player.playerId)
+		- Have the Player join the server in a "room" (for individual player updates)
+		- Adds it to the Server's Players list so that they can be tagged and sold to the blackmarket.
+	*/
 	addPlayer(player);
 	
-	// Create event handlers for the player
-	player.on('enteredGame', () => {
-		sendToBackend(player.playerID,'enteredGame',null);
+	/**************************************************************************
+		Create the event handlers to link up the Front to the Backend listener.
+		These are tied to the SENDER functions in the server.service.ts component
+		in the Frontend subsystem.
+	**************************************************************************/
+	
+	player.on('entered_game', () => {
+		log("recieved entered_game signal");
+		log("data: ");
+		log(data);
+		sendToBackend(player.playerId,'entered_game',null);
 	});
-	player.on('move', (direction) => {
-		sendToBackend(player.playerID,'move',direction);
+	
+	player.on('start_game', (data) => {
+		/* data format:
+		  {
+			playerId: string
+		  }
+		*/
+		log("recieved start_game signal");
+		log("data: ");
+		log(data);
+		sendToBackend(player.playerId,'start_game',data);
 	});
-	player.on('pass_turn', () => {
-		sendToBackend(player.playerID,'pass_turn',null);
+	
+	player.on('move', (data) => {
+		/* data format:
+		  {
+			playerId: string,
+			direction: string
+		  }
+		*/
+		log("recieved move signal");
+		log("data: ");
+		log(data);
+		sendToBackend(player.playerId,'move',data);
+	});
+	
+
+	player.on('make_suggestion', (data) => {
+		/* data format:
+          {
+            playerId: string,
+            suspect: string,
+            weapon: string,
+            room: string
+          }
+        */
+		log("recieved make_suggestion signal");
+		log("data: ");
+		log(data);
+		sendToBackend(player.playerId,'make_suggestion',data);
+	});
+	
+	player.on('make_accusation', (data) => {
+		/* data format:
+          {
+            playerId: string,
+            suspect: string,
+            weapon: string,
+            room: string
+          }
+        */
+		log("recieved make_accusation signal");
+		log("data: ");
+		log(data);
+		sendToBackend(player.playerId,'make_accusation',data);
+	});
+
+	player.on('pass_turn', (data) => {
+		/* data format:
+			{
+				playerId: string
+			}
+		*/
+		log("recieved pass_turn signal");
+		log("data: ");
+		log(data);
+		sendToBackend(player.playerId,'pass_turn',data);
+	});
+	
+	player.on('make_move', (data) => {
+		/* data format:
+		  {
+			playerId: string,
+			suspect: string,
+			room: string
+		  }
+		*/
+		log("recieved make_move signal");
+		log("data: ");
+		log(data);
+		sendToBackend(player.playerId,'make_move',data);
+	});
+
+	player.on('select_suspect', (data) => {
+		/* data format:
+		  {
+			playerId: string,
+			suspect: string
+		  }
+		*/
+		log("recieved select_suspect signal");
+		log("data: ");
+		log(data);
+		sendToBackend(player.playerId,'select_suspect',data);
+	});
+
+	player.on('disconnect', (null) => {
+		log("recieved disconnect signal");
+		removePlayer(player)
+		sendToBackend(player.playerId,'disconnect',null);
 	});
 });
-/*
-
-// When a signal is emmitted from the Client,
-// we send a signal to the Backend
-clientSocket.on('connection', socket => {
-    socket.emit('position', position);
-    socket.on('move', data => {
-        // Digest data and send to the Backend
-        data = data.concat('\n');
-        backend.stdin.write(data);
-    });
-});
-
-// From the messages recieved from the Backend,
-// we send the signal to the Client
-backend.stdout.on('data', (data) => {
-    console.log(data);
-    position = JSON.parse(data);
-    console.log(position);
-    clientSocket.emit('position',position);
-});
-
-*/
