@@ -1,13 +1,56 @@
 /*
-##############################################################################
-# File: main.js
-# Language: Javascript
-# Author: Nate Lao (nlao1@jh.edu)
-# Created On: 3/31/2020
+################################################################################
+# File:            main.js
+# Subcomponent:    Clueless/Serverside
+# Language:        Javascript
+# Author:          Nate Lao (nlao1@jh.edu)
+# Date Created:    3/31/2020
 # Description:
-#       ServerSide main script for ingesting and returning JSON messages
-#       between the Client interface (FrontEnd) and the game logic (Backend)
-##############################################################################
+#          Server interface for the Clueless Frontend Client subcomponent and
+#          the Clueless Serverside Server subcomponent. Manages the handling of
+#          SocketIO event signals, Client management and Backend Python thread
+#          process allocation. 
+#
+# Detailed Description:
+#          <<Method of Execution>>
+#          This process runs when the Clueless Server has issued a OS 'node' call
+#          for this program. Client (i.e. Players) are captured when a HTTP Node
+#          signal request is made to the host Server. During the start of operation,
+#          this process spawns a new Serverside:listener.py thread to interface with
+#          Backend game logic component. This process interprets the request signals
+#          from the Clients and passes on the significant information to the listener
+#          wrapper thread. The python listener thread interfaces through stdout/stdin
+#          OS file pipes.
+#
+#          <<Data Protocol Design>>
+#          Information that is sent from this process must observe the following schema:
+#          Format:
+#          {
+#               playerId: "all" or <playerId>,
+#               event: <string>,
+#               payload: {}
+#          }
+#          Where:
+#              -playerId : the target player ID string to be sent.
+#              -event : the string action that corresponds to the event.
+#                           signature expected by the player.
+#              -payload : a dictionary (JSON) that is sent to the Client(s).
+#
+#          Information that is sent to this process must observe the following schema:
+#          the following format:
+#          {
+#               playerId: <playerId>,
+#               event: <string>,
+#               payload: {}
+#          }
+#          Where:
+#              -playerId : the player ID that sent the signal.
+#              -event : the string action that corresponds to the event.
+#                           signature made by the player.
+#              -payload : a dictionary (JSON) that contains additional information
+#                         about the event.
+#
+################################################################################
 */
 
 /******************************************************************************
@@ -117,15 +160,6 @@ function findPlayerIP(player) {
 	Creates a player ID. Do I really have to spell it out?
 */
 function createPlayerID(player) {
-	// TODO - this might not work
-	// TODO --TESTING
-	//log("SOCKETDUMP:");
-	//log(player);
-	//playerId = findPlayerIP(player); // TODO -- one thing to consider, there might be more than one player within a private network
-	//log("PLAYER IP");
-	//log(playerId);
-	//log(String(player)); // TESTING
-
 	playerId = playerIds[playerIDidx];
 	playerIDidx = (playerIDidx + 1) % playerIds.length; // TODO this is a band aid
 

@@ -1,30 +1,42 @@
 #!/usr/bin/python3
 ################################################################################
-# File: clueless
-# Language: python3
-# Author: Nate Lao (nlao1@jh.edu)
-# Date Created: 4/12/2020
+# File:            listener.py
+# Subcomponent:    Clueless/Serverside
+# Language:        python3
+# Author:          Nate Lao (nlao1@jh.edu)
+# Date Created:    4/12/2020
 # Description:
-#          Listener thread to catch input data from stdin and print output to stdout.
+#          Listener interface for the Clueless Frontend Client subcomponent and
+#          the Clueless Backend Server subcomponent. Manages the subcomponent
+#          interface protocol through file redirection through OS stdin/stdout
+#          pipe.
 #
 # Detailed Description:
+#          <<Method of Execution>>
+#          Memory and thread resources are allocated within the Server OS for this 
+#          process by using the 'spawn' OS function in Serverside:main.js.
+#          This process performs a busy wait by calling an infinite loop that blocks
+#          for OS stdin input. The input is then parsed and interpreted as a Dictionary
+#          object for processing. Output is done through stdout. Once a request is
+#          made on the process, the process performs a print function to output
+#          the requested data to stdout. This data is parsed and interpreted by the
+#          caller, Serverside:main.js.
 #
-#          ############### Backend -> Serverside -> Frontend ###############
-#          The JSON data that is sent to the ServerSide must be in the following
-#          format:
+#          <<Data Protocol Design>>
+#          Information that is sent from this process must observe the following schema:
+#          Format:
 #          {
 #               playerId: "all" or <playerId>,
 #               event: <string>,
 #               payload: {}
 #          }
 #          Where:
-#              -playerId : the target player ID string to be sent
-#              -event : the string action that corresponds to the event
-#                           signature expected by the player
-#              -payload : a dictionary (JSON) to sent to the player(s)
+#              -playerId : the target player ID string to be sent.
+#              -event : the string action that corresponds to the event.
+#                           signature expected by the player.
+#              -payload : a dictionary (JSON) that is sent to the Client(s).
 #
-#          ############### Frontend -> Serverside -> Backend ###############
-#          The JSON data that is sent to the Backend (this) is expected to be in 
+#          Information that is sent to this process must observe the following schema:
 #          the following format:
 #          {
 #               playerId: <playerId>,
@@ -32,13 +44,13 @@
 #               payload: {}
 #          }
 #          Where:
-#              -playerId : the player ID that sent the signal
-#              -event : the string action that corresponds to the event
-#                           signature made by the player
-#              -payload : a dictionary (JSON) to sent to the player(s)
+#              -playerId : the player ID that sent the signal.
+#              -event : the string action that corresponds to the event.
+#                           signature made by the player.
+#              -payload : a dictionary (JSON) that contains additional information
+#                         about the event.
 #
 ################################################################################
-
 
 ################################################################################
 # IMPORT STUFF FROM THE BACKEND TO LINK UP THE APPLICATION
