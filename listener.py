@@ -213,7 +213,7 @@ if __name__ == "__main__": # Safeguard against accidental imports
 			game.make_move(payload["playerId"],payload["suspect"],payload["room"])
 			
 		elif event == "select_character":
-			game.select_suspect(payload["playerId"],payload["suspect"])
+			game.select_suspect(payload["playerId"],payload["character"])
 			
 		elif event == "disconnect":
 			game.end_game()

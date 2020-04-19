@@ -215,6 +215,9 @@ function sendToBackend(playerId,eventName,payload) {
 		};
 	signal = JSON.stringify(signal);	// absolutely necessary
 	signal = signal.concat('\n');		// also absolutely necessary
+	log(">>> START OF RAW BACKEND STRING <<<",INCOMING_SIGNAL_LOG);
+	log(signal,INCOMING_SIGNAL_LOG);
+	log(">>> END OF RAW BACKEND STRING <<<",INCOMING_SIGNAL_LOG);
 	backend.stdin.write(signal);		// Spit out to stdin!
 }
 
