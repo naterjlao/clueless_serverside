@@ -212,7 +212,8 @@ if __name__ == "__main__": # Safeguard against accidental imports
 			
 		elif event == "select_character":
 			game.add_player(playerId)
-			game.select_suspect(playerId,payload["character"])
+			available_characters = game.select_character(playerId,payload["character"])
+			sendToAll('available_characters',available_characters)
 			
 		elif event == "disconnect":
 			game.end_game()
