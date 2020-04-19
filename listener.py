@@ -221,7 +221,7 @@ if __name__ == "__main__": # Safeguard against accidental imports
 		# Once the minimal amount of clients reached the server, send out game ready signal
 		if ((len(playerIds) >= MIN_PLAYER) and not game_ready_sent):
 			game_ready_sent = True
-			sendToPlayer(playerId,'game_is_ready',{'placeholder':'nothing'})
+			sendToPlayer(playerIds[0],'game_is_ready',{'placeholder':'nothing'}) # Assuming that the first player is the first element
 		
 		# Send out the game state at every cycle
 		sendToAll('update_gameState',game.get_gamestateDict())
