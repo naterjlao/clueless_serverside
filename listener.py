@@ -180,9 +180,6 @@ if __name__ == "__main__": # Safeguard against accidental imports
 			sendToAll("turnChange",{"turn":current_turn})
 			sendToPlayer(playerId,"position",{"position":position})
 			
-			# We add a player in the Game and return a gamestate JSON
-			game.add_player(playerId)
-			
 		elif event == "start_game":
 			game.start_game()
 		
@@ -213,6 +210,7 @@ if __name__ == "__main__": # Safeguard against accidental imports
 			game.make_move(playerId,payload["suspect"],payload["room"])
 			
 		elif event == "select_character":
+			game.add_player(playerId)
 			game.select_suspect(playerId,payload["character"])
 			
 		elif event == "disconnect":
