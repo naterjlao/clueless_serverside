@@ -216,4 +216,4 @@ if __name__ == "__main__": # Safeguard against accidental imports
 		elif event == "disconnect":
 			game.end_game()
 			
-		sendToAll('gamestate',game.get_gamestateDict())
+		sendToAll('update_gameState',game.get_gamestateDict())
