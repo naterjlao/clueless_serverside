@@ -201,19 +201,19 @@ if __name__ == "__main__": # Safeguard against accidental imports
 			sendToAll('position',{"position":position})
 		
 		elif event == "make_suggestion":
-			game.make_suggestion(payload["playerId"],payload["suspect"],payload["weapon"],payload["room"])
+			game.make_suggestion(playerId,payload["suspect"],payload["weapon"],payload["room"])
 			
 		elif event == "make_accusation":
-			game.make_suggestion(payload["playerId"],payload["suspect"],payload["weapon"],payload["room"])
+			game.make_suggestion(playerId,payload["suspect"],payload["weapon"],payload["room"])
 		
 		elif event == "pass_turn":
-			game.end_turn(payload["playerId"])
+			game.end_turn(playerId)
 		
 		elif event == "make_move":
-			game.make_move(payload["playerId"],payload["suspect"],payload["room"])
+			game.make_move(playerId,payload["suspect"],payload["room"])
 			
 		elif event == "select_character":
-			game.select_suspect(payload["playerId"],payload["character"])
+			game.select_suspect(playerId,payload["character"])
 			
 		elif event == "disconnect":
 			game.end_game()
