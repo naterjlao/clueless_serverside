@@ -66,6 +66,7 @@ from Server import Game
 PLAYER_ID = 'playerId'
 EVENT = 'eventName' # NOTE - Javascript has 'event' as a reserved keyword!
 PAYLOAD = 'payload'
+MIN_PLAYER = 2
 
 ################################################################################
 # DEBUG
@@ -91,10 +92,6 @@ def sendToPlayer(playerId,event,sendData):
 # Shoots <sendData> for the <event> to Serverside for all Clients
 def sendToAll(event,sendData):
 	sendToPlayer("all",event,sendData)
-
-# TODO this might be temporary
-def nextTurn(): # TODO
-	pass
 	
 ################################################################################
 # INSTANCE VARIABLES
@@ -102,6 +99,7 @@ def nextTurn(): # TODO
 
 # Stores the player IDs that sent the request
 playerIds = []
+game_ready_sent = False
 
 #### TODO --- THIS IS TEMPORARY replace with actual game objects ----- #######
 # Create variables that is stored at runtime for this process
@@ -142,6 +140,9 @@ if __name__ == "__main__": # Safeguard against accidental imports
 		event = signal[EVENT]
 		payload = signal[PAYLOAD]
 		
+		# Add the player to the list of players registered in the game
+		if (not (playerId in playerIds)):
+			playerIds.append(playerId)
 		
 		# Event Signal Signatures
 		
@@ -216,4 +217,10 @@ if __name__ == "__main__": # Safeguard against accidental imports
 		elif event == "disconnect":
 			game.end_game()
 			
+		# Once the minimal amount of clients reached the server, send out game ready signal
+		if ((len(playerIds) >= MIN_PLAYER) and not game_ready_sent):
+			game_ready_sent = True
+			sendToPlayer(playerId,'game_is_ready',{'placeholder':'nothing'})
+		
+		# Send out the game state at every cycle
 		sendToAll('update_gameState',game.get_gamestateDict())
