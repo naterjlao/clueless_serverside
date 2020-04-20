@@ -157,12 +157,15 @@ function findPlayerIP(player) {
 }
 
 /*
-	Creates a player ID. Do I really have to spell it out?
+	Returns a player for the given player
 */
 function createPlayerID(player) {
+	/* // DEPRECATED
 	playerId = playerIds[playerIDidx];
 	playerIDidx = (playerIDidx + 1) % playerIds.length; // TODO this is a band aid
-
+	*/
+	
+	playerId = playerIds.shift(); // Remove from the beggining of the array
 	log("CREATED PLAYER ID: ".concat(playerId));
 
 	return playerId;
@@ -184,6 +187,7 @@ function addPlayer(player) {
 	players.push(player);    // add the player to player list
 
 	log("ADDED PLAYER: ".concat(player.playerId));
+	log("AVAILABLE PLAYER IDs: ".concat(playerIds));
 }
 
 /* Returns the Player that is associated with the PlayerID */
@@ -203,7 +207,17 @@ function getPlayer(playerId) {
 function removePlayer(player) {
 	log("REMOVING PLAYER: ".concat(player.playerId));
 
+	// Remove the socket from the associated room
 	player.leave(player.playerId);
+	
+	// (I hate javascript) remove the player from the list of players
+	players.splice(players.indexOf(playerId),players.indexOf(playerId));
+	
+	// Push the ID back to available IDs that could be handed out
+	playerIds.push(playerId);
+
+	log("REMOVED PLAYER: ".concat(player.playerId));
+	log("AVAILABLE PLAYER IDs: ".concat(playerIds));
 }
 
 /* Shoots a signal to the backend listener */

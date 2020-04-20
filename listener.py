@@ -141,6 +141,8 @@ if __name__ == "__main__": # Safeguard against accidental imports
 		payload = signal[PAYLOAD]
 		
 		# Add the player to the list of players registered in the game
+		# TODO, this thing's job is only to keep track of how many
+		# clients have CONNECTED in the game, this is potentially redundant.
 		if (not (playerId in playerIds)):
 			playerIds.append(playerId)
 		
@@ -216,9 +218,11 @@ if __name__ == "__main__": # Safeguard against accidental imports
 			sendToAll('available_characters',available_characters)
 			
 		elif event == "disconnect":
+			# TODO redundant code is redundant, should player management be handled in the ServerSide or Backend?
+			playerIds.remove(playerId)
 			game.end_game()
 			
-		# Once the minimal amount of clients reached the server, send out game ready signal
+		# Once the minimal amount of clients has reached the server, send out game ready signal
 		if ((len(playerIds) >= MIN_PLAYER) and not game_ready_sent):
 			game_ready_sent = True
 			sendToPlayer(playerIds[0],'game_is_ready',{'placeholder':'nothing'}) # Assuming that the first player is the first element
