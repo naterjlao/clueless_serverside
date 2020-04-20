@@ -314,6 +314,11 @@ mainSocket.on('connection', player => {
 		in the Frontend subsystem.
 	**************************************************************************/
 
+	player.on('entered_player_select', () => {
+		log("RECIEVED entered_player_select SIGNAL",INCOMING_SIGNAL_LOG);
+		sendToBackend(player.playerId,'entered_player_select',null);
+	});
+
 	player.on('entered_game', () => {
 		log("RECIEVED entered_game SIGNAL",INCOMING_SIGNAL_LOG);
 		sendToBackend(player.playerId,'entered_game',null);

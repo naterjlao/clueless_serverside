@@ -178,11 +178,15 @@ if __name__ == "__main__": # Safeguard against accidental imports
 		# Game.end_turn(name)
 		
 		# TODO this is ugly and slow as hell, could use a hash or something
-		if event == "entered_game":
+		if event == "entered_player_select":
+			available_characters = game.select_character(playerId,payload["character"])
+			sendToPlayer(playerId,'available_characters',available_characters)
+			
+		elif event == "entered_game":
 			sendToPlayer(playerId,'startInfo',{"player":playerId})
 			sendToAll("turnChange",{"turn":current_turn})
 			sendToPlayer(playerId,"position",{"position":position})
-			
+		
 		elif event == "start_game":
 			game.start_game()
 		
@@ -230,4 +234,3 @@ if __name__ == "__main__": # Safeguard against accidental imports
 		
 		# Send out the game state at every cycle
 		sendToAll('update_gameState',game.get_gamestateDict())
-		sendToAll('available_characters',available_characters)
