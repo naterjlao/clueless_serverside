@@ -211,6 +211,8 @@ if __name__ == "__main__": # Safeguard against accidental imports
 		
 		elif event == "make_move":
 			game.make_move(playerId,payload["suspect"],payload["room"])
+			# Return the list of rooms that is available to the player
+			sendToPlayer(playerId,'move_options',{"move_options":game.check_move_options(payload["room"])})
 			
 		elif event == "select_character":
 			game.add_player(playerId)
