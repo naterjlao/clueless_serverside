@@ -204,7 +204,7 @@ if __name__ == "__main__": # Safeguard against accidental imports
 			game.make_suggestion(playerId,payload["suspect"],payload["weapon"],payload["room"])
 			
 		elif event == "make_accusation":
-			game.make_suggestion(playerId,payload["suspect"],payload["weapon"],payload["room"])
+			game.make_accusation(playerId,payload["suspect"],payload["weapon"],payload["room"])
 		
 		elif event == "pass_turn":
 			game.end_turn(playerId)
