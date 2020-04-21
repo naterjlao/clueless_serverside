@@ -240,7 +240,7 @@ if __name__ == "__main__": # Safeguard against accidental imports
 			sendToPlayer(playerIds[0],'game_is_ready',{'placeholder':'nothing'}) # Assuming that the first player is the first element
 		
 		# Send out the game state at every cycle
-		sendToPlayer(playerId,'turn_status',{'turn_status':game.check_turn_status()})
+		#sendToPlayer(playerId,'turn_status',{'turn_status':game.check_turn_status()})
 		sendToAll('available_characters',game.start_select_character()) # TODO the thing its returning should be mutable???
 		sendToAll('update_gameState',game.get_gamestateDict())
 		
