@@ -141,7 +141,8 @@ if __name__ == "__main__": # Safeguard against accidental imports
 		########################################################################
 		playerId = signal[PLAYER_ID]
 		event = signal[EVENT]
-		payload = signal[PAYLOAD]
+		if PAYLOAD in signal: # Guard against the event that no payload was given
+			payload = signal[PAYLOAD]
 		
 		# Add the player to the list of players registered in the game
 		# TODO, this thing's job is only to keep track of how many
