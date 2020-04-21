@@ -227,7 +227,7 @@ if __name__ == "__main__": # Safeguard against accidental imports
 			
 		elif event == "select_character":
 			game.add_player(playerId)
-			available_characters = game.select_character(playerId,payload["character"])
+			game.select_character(playerId,payload["character"]) # select a character
 			
 		elif event == "disconnect":
 			# TODO redundant code is redundant, should player management be handled in the ServerSide or Backend?
@@ -240,4 +240,10 @@ if __name__ == "__main__": # Safeguard against accidental imports
 			sendToPlayer(playerIds[0],'game_is_ready',{'placeholder':'nothing'}) # Assuming that the first player is the first element
 		
 		# Send out the game state at every cycle
+		sendToAll('available_characters',game.start_select_character()) # TODO the thing its returning should be mutable???
 		sendToAll('update_gameState',game.get_gamestateDict())
+		
+		
+		
+		
+		
