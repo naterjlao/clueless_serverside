@@ -99,7 +99,10 @@ def sendToAll(event,sendData):
 
 # Stores the player IDs that sent the request
 playerIds = []
+
+# Flags for one-time signals TODO -- not the ideal solution
 game_ready_sent = False
+entered_player_select_sent = False
 
 #### TODO --- THIS IS TEMPORARY replace with actual game objects ----- #######
 # Create variables that is stored at runtime for this process
@@ -178,9 +181,12 @@ if __name__ == "__main__": # Safeguard against accidental imports
 		# Game.end_turn(name)
 		
 		# TODO this is ugly and slow as hell, could use a hash or something
-		if event == "entered_player_select":
-			available_characters = game.select_character(playerId,payload["character"])
+		
+		# One time send of available characters TODO -- not ideal
+		if event == "entered_player_select" and not entered_player_select_sent:
+			available_characters = game.start_select_character()
 			sendToPlayer(playerId,'available_characters',available_characters)
+			entered_player_select_sent = True
 			
 		elif event == "entered_game":
 			sendToPlayer(playerId,'startInfo',{"player":playerId})
