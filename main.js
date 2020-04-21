@@ -62,6 +62,7 @@ const LOG_DIR             = '/opt/clueless/log/'
 const GENERAL_LOG         = 'serverside.log';
 const INCOMING_SIGNAL_LOG = 'incoming.log';
 const OUTGOING_SIGNAL_LOG = 'outgoing.log';
+const CRASH_LOG           = 'crash.log';
 const BACKEND_WRAPPER     = '/opt/clueless/src/serverside/listener.py';
 const DEBUG               = true
 
@@ -132,6 +133,11 @@ function log(message,type=GENERAL_LOG) {
 		fs.appendFileSync((LOG_DIR+type),(timestamp()+'\t'+message+'\n'));
 	}
 }
+
+/* Log out crash info if the backend listener nopes out */
+backend.stderr.on('data', (big_oof) => {
+	log(big_oof,CRASH_LOG);
+});
 
 /******************************************************************************
 * AUXILIARY FUNCTIONS
