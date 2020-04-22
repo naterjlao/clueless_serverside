@@ -102,7 +102,7 @@ players = [];
 /*
 	Funny names for the geek. TODO this is temporary because testing at same localhost
 */
-playerIds = ["redBoi","greenBoi","blueBoi","orangeGurl","yellowBoi","magentaBoi","transparentBoi"]
+playerIds = ["player0","player1","player2","player3","player4","player5","player6"]
 playerIDidx = 0
 
 /******************************************************************************
