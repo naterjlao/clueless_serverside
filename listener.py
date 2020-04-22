@@ -103,6 +103,7 @@ playerIds = []
 # Flags for one-time signals TODO -- not the ideal solution
 game_ready_sent = False
 entered_player_select_sent = False
+game_started = False
 
 #### TODO --- THIS IS TEMPORARY replace with actual game objects ----- #######
 # Create variables that is stored at runtime for this process
@@ -195,6 +196,7 @@ if __name__ == "__main__": # Safeguard against accidental imports
 			sendToPlayer(playerId,"position",{"position":position})
 		
 		elif event == "start_game":
+			game_started = True
 			game.start_game()
 		
 		# THIS IS TEMPORARY
@@ -245,7 +247,8 @@ if __name__ == "__main__": # Safeguard against accidental imports
 		# FIXME workaround of a workaround
 		if (gamestate["current_player"]).__class__ == dict:
 			cur_player = gamestate["current_player"]["user"]
-			sendToAll('turnUpdate',{"playerId":cur_player, "turn_status": gamestate["turn_status"],"move_options": game.check_move_options(game.get_suspect_current_space(cur_player))})
+			if game_started:
+				sendToAll('turnUpdate',{"playerId":cur_player, "turn_status": gamestate["turn_status"],"move_options": game.check_move_options(game.get_suspect_current_space(cur_player))})
 		sendToAll('available_characters',game.start_select_character()) # TODO the thing its returning should be mutable???
 		sendToAll('update_gameState',gamestate)
 		
