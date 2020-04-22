@@ -108,7 +108,7 @@ game_started = False
 #### TODO --- THIS IS TEMPORARY replace with actual game objects ----- #######
 # Create variables that is stored at runtime for this process
 position = {"x":100,"y":100}
-current_turn = "redBoi" # set to the ID of the first Player entered
+current_turn = "player0" # set to the ID of the first Player entered
 #### TODO --- THIS IS TEMPORARY replace with actual game objects ----- #######
 
 
