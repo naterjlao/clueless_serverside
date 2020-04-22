@@ -242,8 +242,10 @@ if __name__ == "__main__": # Safeguard against accidental imports
 		# Send out the game state at every cycle
 		#sendToPlayer(playerId,'turn_status',{'turn_status':game.check_turn_status()})
 		gamestate = game.get_gamestateDict()
-		cur_player = gamestate["current_player"]["user"]
-		sendToAll('turnUpdate',{"playerId":cur_player, "turn_status": gamestate["turn_status"],"move_options": game.check_move_options(get_suspect_current_space(cur_player))})
+		# FIXME workaround of a workaround
+		if (gamestate["current_player"]).__class__ == dict:
+			cur_player = gamestate["current_player"]["user"]
+			sendToAll('turnUpdate',{"playerId":cur_player, "turn_status": gamestate["turn_status"],"move_options": game.check_move_options(get_suspect_current_space(cur_player))})
 		sendToAll('available_characters',game.start_select_character()) # TODO the thing its returning should be mutable???
 		sendToAll('update_gameState',)
 		
