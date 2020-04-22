@@ -248,7 +248,7 @@ if __name__ == "__main__": # Safeguard against accidental imports
 		if (gamestate["current_player"]).__class__ == dict:
 			cur_player = gamestate["current_player"]["user"]
 			if game_started:
-				sendToAll('turnUpdate',{"playerId":cur_player, "turn_status": gamestate["turn_status"],"move_options": game.check_move_options(self.game.get_suspect_current_space(cur_player))})
+				sendToAll('turnUpdate',{"playerId":cur_player, "turn_status": gamestate["turn_status"],"move_options": game.check_move_options(game.get_suspect_current_space(cur_player))})
 		sendToAll('available_characters',game.start_select_character()) # TODO the thing its returning should be mutable???
 		sendToAll('update_gameState',gamestate)
 		
