@@ -253,6 +253,24 @@ if __name__ == "__main__": # Safeguard against accidental imports
 		sendToAll('update_gameState',gamestate)
 		
 		
+		'''
+		sendToAll('turnUpdate',{"playerId":cur_player, "turn_status": gamestate["turn_status"],"move_options": game.check_move_options(game.get_suspect_current_space(cur_player).name)})
+		
+		
+		sendtoPlayer('suggestion options',{"suspect": TODO ANY, "weapon": TODO ANY,"room": game.get_suspect_current_space(cur_player).name)})
+		
+		sendtoAll('suspect list', )
+		sendtoAll('weapons list', )
+
+
+		sendtoPlayer('card_hand', gamestate.["current_player"].card_hand
+
+
+		sendtoPlayer('check_list', gamestate.["current_player"].card_seen
+
+
+
+		'''
 		
 		
 		
