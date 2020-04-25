@@ -96,7 +96,8 @@ def sendToAll(event,sendData):
 ################################################################################
 # INSTANCE VARIABLES
 ################################################################################
-
+''' DEPRECATED
+TODO >>> THE GAMESTATE SHOULD STORE ALL OF THIS INFORMATION <<<
 # Stores the player IDs that sent the request
 playerIds = []
 
@@ -104,13 +105,15 @@ playerIds = []
 game_ready_sent = False
 entered_player_select_sent = False
 game_started = False
+'''
 
+''' DEPRECATED
 #### TODO --- THIS IS TEMPORARY replace with actual game objects ----- #######
 # Create variables that is stored at runtime for this process
 position = {"x":100,"y":100}
 current_turn = "player0" # set to the ID of the first Player entered
 #### TODO --- THIS IS TEMPORARY replace with actual game objects ----- #######
-
+'''
 
 ################################################################################
 # MAIN
@@ -126,10 +129,6 @@ if __name__ == "__main__": # Safeguard against accidental imports
 	# Spinup a listener, this will be killed when the Serverside application is killed
 	while True:
 	
-		# TODO -- there is a case where there might be conflicting signals at the same time,
-		# TODO -- might need to implement an input buffer to handle these cases.
-		# TODO -- absolute worst case, multithreading might be needed
-	
 		########################################################################
 		# Get the RAW signal from the ServerSide
 		########################################################################
@@ -142,15 +141,30 @@ if __name__ == "__main__": # Safeguard against accidental imports
 		########################################################################
 		playerId = signal[PLAYER_ID]
 		event = signal[EVENT]
-		if PAYLOAD in signal: # Guard against the event that no payload was given
-			payload = signal[PAYLOAD]
+		payload = signal[PAYLOAD]
 		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		''' DEPRECATED
 		# Add the player to the list of players registered in the game
-		# TODO, this thing's job is only to keep track of how many
-		# clients have CONNECTED in the game, this is potentially redundant.
+		# TODO REDUNDANT -- GAMESTATE ALREADY DOES THIS
 		if (not (playerId in playerIds)):
 			playerIds.append(playerId)
+		''''
 		
+		
+		
+		
+		
+		
+		''' DEPRECATE
 		# Event Signal Signatures
 		
 		# << FRONT -> BACK >>
@@ -252,25 +266,6 @@ if __name__ == "__main__": # Safeguard against accidental imports
 		sendToAll('available_characters',game.start_select_character()) # TODO the thing its returning should be mutable???
 		sendToAll('update_gameState',gamestate)
 		
-		
 		'''
-		sendToAll('turnUpdate',{"playerId":cur_player, "turn_status": gamestate["turn_status"],"move_options": game.check_move_options(game.get_suspect_current_space(cur_player).name)})
-		
-		
-		sendtoPlayer('suggestion options',{"suspect": TODO ANY, "weapon": TODO ANY,"room": game.get_suspect_current_space(cur_player).name)})
-		
-		sendtoAll('suspect list', )
-		sendtoAll('weapons list', )
-
-
-		sendtoPlayer('card_hand', gamestate.["current_player"].card_hand
-
-
-		sendtoPlayer('check_list', gamestate.["current_player"].card_seen
-
-
-
-		'''
-		
 		
 		
