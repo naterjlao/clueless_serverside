@@ -439,6 +439,7 @@ mainSocket.on('connection', player => {
 		sendToBackend(player.playerId,'select_character',data);
 	});
 
+	// SPECIAL CASE SIGNAL
 	player.on('disconnect', () => {
 		log("RECIEVED disconnect SIGNAL",INCOMING_SIGNAL_LOG);
 
