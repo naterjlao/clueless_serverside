@@ -67,7 +67,6 @@ PLAYER_ID = 'playerId'
 EVENT = 'eventName' # NOTE - Javascript has 'event' as a reserved keyword!
 PAYLOAD = 'payload'
 DIRTY = 'dirty' # key name if TRUE - the status/payload has been modified
-MIN_PLAYER = 2
 
 ################################################################################
 # DEBUG
@@ -110,13 +109,13 @@ if __name__ == "__main__": # Safeguard against accidental imports
 		########################################################################
 		# Send out these signals after every cycle
 		########################################################################
-		gamestate    = game.getGamestate()    # For all
-		gameboard    = game.getGameboard()    # For all
-		playerstates = game.getPlayerstates() # Player dependent
-		checklists   = game.getChecklists()   # Player dependent
-		moveoptions  = game.getMoveOptions()  # Player dependent
-		cardlists    = game.getCardLists()    # Player dependent
-		messages     = game.getMessages()     # Player dependent
+		gamestate    = game.getGamestate()    # For all (dict) # TODO who's turn, list of players
+		gameboard    = game.getGameboard()    # For all (dict)
+		playerstates = game.getPlayerstates() # Player dependent (list of dicts)
+		checklists   = game.getChecklists()   # Player dependent (list of dicts)
+		moveoptions  = game.getMoveOptions()  # Player dependent (list of dicts)
+		cardlists    = game.getCardLists()    # Player dependent (list of dicts)
+		messages     = game.getMessages()     # Player dependent (list of dicts)
 		
 		# Global signals
 		sendToAll("gamestate", gamestate)
@@ -148,5 +147,25 @@ if __name__ == "__main__": # Safeguard against accidental imports
 		# Retrieve the information from the Client signal
 		playerId, event, payload = signal[PLAYER_ID], signal[EVENT], signal[PAYLOAD]
 		
-		# TODO
+		# TODO make_accusations
+		# to backend-> make_suggestion: contain information about the thing
+		# to client -> message player X won/lose for ALL
+		# to client -> if failed: update gamestate so that the current player is now the next player
+		# to client -> if success: update gamestate somehow to indicated the game is over and winner is declared
+		
+		# TODO make_suggestions
+		# to clientX-> suggestion_enable
+		# to backend-> make_suggestion: contains information (except for ROOM)
+		# to clientALL-> an updated gameboard to move clientY to the ROOM
+		# todotodotodo
+		# to backend-> suggestion_response: disprove or cannot disprove
+		
+		if event == "move_choice":
+			game.selectMove(playerId,payload["choice"])
+		elif event == "card_choice":
+			game.selectCard(playerId,payload["choice"])
+			
+		elif event == "disconnect":
+			game.removePlayer(playerId)
+		
 		

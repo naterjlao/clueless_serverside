@@ -14,7 +14,7 @@
 # Detailed Description:
 #          <<Method of Execution>>
 #          This process runs when the Clueless Server has issued a OS 'node' call
-#          for this program. Client (i.e. Players) are captured when a HTTP Node
+#          for this program. Client (i.e. Clients) are captured when a HTTP Node
 #          signal request is made to the host Server. During the start of operation,
 #          this process spawns a new Serverside:listener.py thread to interface with
 #          Backend game logic component. This process interprets the request signals
@@ -26,27 +26,27 @@
 #          Information that is sent from this process must observe the following schema:
 #          Format:
 #          {
-#               playerId: "all" or <playerId>,
+#               clientId: "all" or <clientId>,
 #               event: <string>,
 #               payload: {}
 #          }
 #          Where:
-#              -playerId : the target player ID string to be sent.
+#              -clientId : the target client ID string to be sent.
 #              -event : the string action that corresponds to the event.
-#                           signature expected by the player.
+#                           signature expected by the client.
 #              -payload : a dictionary (JSON) that is sent to the Client(s).
 #
 #          Information that is sent to this process must observe the following schema:
 #          the following format:
 #          {
-#               playerId: <playerId>,
+#               clientId: <clientId>,
 #               event: <string>,
 #               payload: {}
 #          }
 #          Where:
-#              -playerId : the player ID that sent the signal.
+#              -clientId : the client ID that sent the signal.
 #              -event : the string action that corresponds to the event.
-#                           signature made by the player.
+#                           signature made by the client.
 #              -payload : a dictionary (JSON) that contains additional information
 #                         about the event.
 #
@@ -94,16 +94,22 @@ log('PYTHON LISTENER THREAD SPAWNED');
 * INSTANCE VARIABLES
 ******************************************************************************/
 
+// DEPRECATE
 /*
-	Stores the socket object for each player.
-	Every element has an associated playerId
+	Stores the socket object for each client.
+	Every element has an associated clientId
 */
-players = [];
+clients = [];
 /*
-	Funny names for the geek. TODO this is temporary because testing at same localhost
+	These names have to spelled out this way - it is absolutely necessary for the frontend
 */
-playerIds = ["player0","player1","player2","player3","player4","player5","player6"]
-playerIDidx = 0
+clientIds = ["player0","player1","player2","player3","player4","player5","player6"]
+clientIDidx = 0
+// END OF DEPRECATE
+
+
+// Stores all game instances (NOT USED)
+games = [];
 
 /******************************************************************************
 * LOGGING
@@ -143,93 +149,93 @@ backend.stderr.on('data', (big_oof) => {
 * AUXILIARY FUNCTIONS
 ******************************************************************************/
 
-/* Recursively finds the Player's IP based on the socket input object */
+/* Recursively finds the Client's IP based on the socket input object */
 // NOTE - sooo this works, but there's implied issues with this bit
-function findPlayerIP(player) {
-	playerId = null;
-	for (var key in player) {
+function findClientIP(client) {
+	clientId = null;
+	for (var key in client) {
 		if (key == "address") {
-			playerId = player[key];
+			clientId = client[key];
 			break;
 		}
-		if (player[key] != undefined && player[key].constructor == Object) {
-			playerId = findPlayerIP(player[key]);
-			if (playerId != null) {
+		if (client[key] != undefined && client[key].constructor == Object) {
+			clientId = findClientIP(client[key]);
+			if (clientId != null) {
 				break;
 			}
 		}
 	}
-	return playerId;
+	return clientId;
 }
 
 /*
-	Returns a player for the given player
+	Returns a client for the given client
 */
-function createPlayerID(player) {
+function createClientID(client) {
 	/* // DEPRECATED
-	playerId = playerIds[playerIDidx];
-	playerIDidx = (playerIDidx + 1) % playerIds.length; // TODO this is a band aid
+	clientId = clientIds[clientIDidx];
+	clientIDidx = (clientIDidx + 1) % clientIds.length; // TODO this is a band aid
 	*/
 	
-	playerId = playerIds.shift(); // Remove from the beggining of the array
-	log("CREATED PLAYER ID: ".concat(playerId));
+	clientId = clientIds.shift(); // Remove from the beggining of the array
+	log("CREATED CLIENT ID: ".concat(clientId));
 
-	return playerId;
+	return clientId;
 }
 
 /*
 	Does a bunch of stuff:
-	- Creates a unique playerId for the given player
-	- Associates a field within player (ie. player.playerId)
-	- Have the Player join the server in a "room" (for individual player updates)
-	- Adds it to the Server's Players list so that they can be tagged and sold to the blackmarket.
+	- Creates a unique clientId for the given client
+	- Associates a field within client (ie. client.clientId)
+	- Have the Client join the server in a "room" (for individual client updates)
+	- Adds it to the Server's Clients list so that they can be tagged and sold to the blackmarket.
 */
-function addPlayer(player) {
-	player.playerId = createPlayerID(player);
+function addClient(client) {
+	client.clientId = createClientID(client);
 
-	log("ADDING PLAYER: ".concat(player.playerId));
+	log("ADDING CLIENT: ".concat(client.clientId));
 
-	player.join(playerId);   // the player is joined in a "room" named after the playerId
-	players.push(player);    // add the player to player list
+	client.join(clientId);   // the client is joined in a "room" named after the clientId
+	clients.push(client);    // add the client to client list
 
-	log("ADDED PLAYER: ".concat(player.playerId));
-	log("AVAILABLE PLAYER IDs: ".concat(playerIds));
+	log("ADDED CLIENT: ".concat(client.clientId));
+	log("AVAILABLE CLIENT IDs: ".concat(clientIds));
 }
 
-/* Returns the Player that is associated with the PlayerID */
-function getPlayer(playerId) {
+/* Returns the Client that is associated with the ClientID */
+function getClient(clientId) {
 	target = null;
 	// I hate javascript, I have to create a GD function
 	// in order to do simple for loop...
-	players.forEach(player => {
-		if (player.playerId == playerId) {
-			target = player;
+	clients.forEach(client => {
+		if (client.clientId == clientId) {
+			target = client;
 		}
 	});
 	return target;
 }
 
-/* Removes the Player from the Server */
-function removePlayer(player) {
-	log("REMOVING PLAYER: ".concat(player.playerId));
+/* Removes the Client from the Server */
+function removeClient(client) {
+	log("REMOVING CLIENT: ".concat(client.clientId));
 
 	// Remove the socket from the associated room
-	player.leave(player.playerId);
+	client.leave(client.clientId);
 	
-	// (I hate javascript) remove the player from the list of players
-	players.splice(players.indexOf(playerId),players.indexOf(playerId));
+	// (I hate javascript) remove the client from the list of clients
+	clients.splice(clients.indexOf(clientId),clients.indexOf(clientId));
 	
 	// Push the ID back to available IDs that could be handed out
-	playerIds.push(playerId);
+	clientIds.push(clientId);
 
-	log("REMOVED PLAYER: ".concat(player.playerId));
-	log("AVAILABLE PLAYER IDs: ".concat(playerIds));
+	log("REMOVED CLIENT: ".concat(client.clientId));
+	log("AVAILABLE CLIENT IDs: ".concat(clientIds));
 }
 
 /* Shoots a signal to the backend listener */
-function sendToBackend(playerId,eventName,payload) {
+function sendToBackend(clientId,eventName,payload) {
 	signal = {
-			'playerId' : playerId,
+			'clientId' : clientId,
 			'eventName': eventName,
 			'payload'  : payload
 		};
@@ -272,7 +278,7 @@ backend.stdout.on('data', (data) => {
 
 			/* Parse the chunk into a dictionary object */
 			signal = JSON.parse(chunk);
-			log(">>> SENDING SIGNAL TO: ".concat(signal.playerId.toString()),OUTGOING_SIGNAL_LOG);
+			log(">>> SENDING SIGNAL TO: ".concat(signal.clientId.toString()),OUTGOING_SIGNAL_LOG);
 			log(">>> EVENT SIGNATURE: ".concat(signal.eventName.toString()),OUTGOING_SIGNAL_LOG);
 			if (signal.payload.constructor == Object) {
 				log("<<< START OF SIGNAL PAYLOAD >>>",OUTGOING_SIGNAL_LOG);
@@ -280,15 +286,15 @@ backend.stdout.on('data', (data) => {
 				log("<<< END OF SIGNAL PAYLOAD >>>",OUTGOING_SIGNAL_LOG);
 			}
 
-			/* Send out the signal depending on the playerId tag */
+			/* Send out the signal depending on the clientId tag */
 
-			// Send to a specified player
-			if (signal.playerId != "all") {
-				player = getPlayer(signal.playerId);
-				player.emit(signal.eventName,signal.payload);
+			// Send to a specified client
+			if (signal.clientId != "all") {
+				client = getClient(signal.clientId);
+				client.emit(signal.eventName,signal.payload);
 			}
 
-			// Send to all of the players
+			// Send to all of the clients
 			else {
 				mainSocket.emit(signal.eventName,signal.payload);
 			}
@@ -303,37 +309,58 @@ backend.stdout.on('data', (data) => {
 /*
 	When the server connects to anybody, so these thing.
 */
-mainSocket.on('connection', player => {
+mainSocket.on('connection', client => {
 
 	/*
 		This bit does a bunch of stuff under the hood:
-		- Creates a unique playerId for the given player
-		- Associates a field within player (ie. player.playerId)
-		- Have the Player join the server in a "room" (for individual player updates)
-		- Adds it to the Server's Players list so that they can be tagged and sold to the blackmarket.
+		- Creates a unique clientId for the given client
+		- Associates a field within client (ie. client.clientId)
+		- Have the Client join the server in a "room" (for individual client updates)
+		- Adds it to the Server's Clients list so that they can be tagged and sold to the blackmarket.
 	*/
-	addPlayer(player);
+	addClient(client);
 
 	/**************************************************************************
 		Create the event handlers to link up the Front to the Backend listener.
 		These are tied to the SENDER functions in the server.service.ts component
 		in the Frontend subsystem.
 	**************************************************************************/
-
-	player.on('entered_player_select', (data) => {
-		log("RECIEVED entered_player_select SIGNAL",INCOMING_SIGNAL_LOG);
-		sendToBackend(player.playerId,'entered_player_select',data);
+	
+	/* THESE ARE NEW!!!!! */
+	client.on('move_choice', (payload) => {
+		log("RECIEVED move_choice SIGNAL",INCOMING_SIGNAL_LOG);
+		sendToBackend(client.clientId,'move_choice',payload);
+	});
+	
+	client.on('card_choice', (payload) => {
+		log("RECIEVED card_choice SIGNAL",INCOMING_SIGNAL_LOG);
+		sendToBackend(client.clientId,'card_choice',payload);
+	});
+	
+	
+	// DEPRECATE
+	client.on('entered_client_select', (data) => {
+		log("RECIEVED entered_client_select SIGNAL",INCOMING_SIGNAL_LOG);
+		sendToBackend(client.clientId,'entered_client_select',data);
 	});
 
-	player.on('entered_game', () => {
+	// DEPRECATE
+	client.on('entered_client_select', (data) => {
+		log("RECIEVED entered_client_select SIGNAL",INCOMING_SIGNAL_LOG);
+		sendToBackend(client.clientId,'entered_client_select',data);
+	});
+
+	// DEPRECATE?
+	client.on('entered_game', () => {
 		log("RECIEVED entered_game SIGNAL",INCOMING_SIGNAL_LOG);
-		sendToBackend(player.playerId,'entered_game',null);
+		sendToBackend(client.clientId,'entered_game',null);
 	});
 
-	player.on('start_game', (data) => {
+	// DEPRECATE?
+	client.on('start_game', (data) => {
 		/* data format:
 		  {
-			playerId: string
+			clientId: string
 		  }
 		*/
 		log("RECIEVED start_game SIGNAL",INCOMING_SIGNAL_LOG);
@@ -341,13 +368,14 @@ mainSocket.on('connection', player => {
 		log(JSON.stringify(data),INCOMING_SIGNAL_LOG);
 		log(">>> END OF PAYLOAD DATA <<<",INCOMING_SIGNAL_LOG);
 
-		sendToBackend(player.playerId,'start_game',data);
+		sendToBackend(client.clientId,'start_game',data);
 	});
 
-	player.on('move', (data) => {
+	// DEPRECATE
+	client.on('move', (data) => {
 		/* data format:
 		  {
-			playerId: string,
+			clientId: string,
 			direction: string
 		  }
 		*/
@@ -356,14 +384,14 @@ mainSocket.on('connection', player => {
 		log(JSON.stringify(data),INCOMING_SIGNAL_LOG);
 		log(">>> END OF PAYLOAD DATA <<<",INCOMING_SIGNAL_LOG);
 
-		sendToBackend(player.playerId,'move',data);
+		sendToBackend(client.clientId,'move',data);
 	});
 
-
-	player.on('make_suggestion', (data) => {
+	// DEPRECATE
+	client.on('make_suggestion', (data) => {
 		/* data format:
 		  {
-			playerId: string,
+			clientId: string,
 			suspect: string,
 			weapon: string,
 			room: string
@@ -374,13 +402,14 @@ mainSocket.on('connection', player => {
 		log(JSON.stringify(data),INCOMING_SIGNAL_LOG);
 		log(">>> END OF PAYLOAD DATA <<<",INCOMING_SIGNAL_LOG);
 
-		sendToBackend(player.playerId,'make_suggestion',data);
+		sendToBackend(client.clientId,'make_suggestion',data);
 	});
 
-	player.on('make_accusation', (data) => {
+	// DEPRECATE
+	client.on('make_accusation', (data) => {
 		/* data format:
 		  {
-			playerId: string,
+			clientId: string,
 			suspect: string,
 			weapon: string,
 			room: string
@@ -391,13 +420,14 @@ mainSocket.on('connection', player => {
 		log(JSON.stringify(data),INCOMING_SIGNAL_LOG);
 		log(">>> END OF PAYLOAD DATA <<<",INCOMING_SIGNAL_LOG);
 
-		sendToBackend(player.playerId,'make_accusation',data);
+		sendToBackend(client.clientId,'make_accusation',data);
 	});
 
-	player.on('pass_turn', (data) => {
+	// DEPRECATE
+	client.on('pass_turn', (data) => {
 		/* data format:
 			{
-				playerId: string
+				clientId: string
 			}
 		*/
 		log("RECIEVED pass_turn SIGNAL",INCOMING_SIGNAL_LOG);
@@ -405,13 +435,14 @@ mainSocket.on('connection', player => {
 		log(JSON.stringify(data),INCOMING_SIGNAL_LOG);
 		log(">>> END OF PAYLOAD DATA <<<",INCOMING_SIGNAL_LOG);
 
-		sendToBackend(player.playerId,'pass_turn',data);
+		sendToBackend(client.clientId,'pass_turn',data);
 	});
 
-	player.on('make_move', (data) => {
+	// DEPRECATE
+	client.on('make_move', (data) => {
 		/* data format:
 		  {
-			playerId: string,
+			clientId: string,
 			suspect: string,
 			room: string
 		  }
@@ -421,13 +452,14 @@ mainSocket.on('connection', player => {
 		log(JSON.stringify(data),INCOMING_SIGNAL_LOG);
 		log(">>> END OF PAYLOAD DATA <<<",INCOMING_SIGNAL_LOG);
 
-		sendToBackend(player.playerId,'make_move',data);
+		sendToBackend(client.clientId,'make_move',data);
 	});
 
-	player.on('select_character', (data) => {
+	// DEPRECATE
+	client.on('select_character', (data) => {
 		/* data format:
 		  {
-			playerId: string,
+			clientId: string,
 			character: string
 		  }
 		*/
@@ -436,14 +468,14 @@ mainSocket.on('connection', player => {
 		log(JSON.stringify(data),INCOMING_SIGNAL_LOG);
 		log(">>> END OF PAYLOAD DATA <<<",INCOMING_SIGNAL_LOG);
 
-		sendToBackend(player.playerId,'select_character',data);
+		sendToBackend(client.clientId,'select_character',data);
 	});
 
 	// SPECIAL CASE SIGNAL
-	player.on('disconnect', () => {
+	client.on('disconnect', () => {
 		log("RECIEVED disconnect SIGNAL",INCOMING_SIGNAL_LOG);
 
-		removePlayer(player)
-		sendToBackend(player.playerId,'disconnect',null);
+		removeClient(client)
+		sendToBackend(client.clientId,'disconnect',null);
 	});
 });
