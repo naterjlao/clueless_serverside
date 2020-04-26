@@ -172,24 +172,24 @@ if __name__ == "__main__": # Safeguard against accidental imports
 		playerId, event, payload = parseRecieveSignal(signal)
 		
 		if   event == "entered_player_select":
-			game.addPlayer(playerId)
+			game.add_player(playerId)
 		elif event == "select_character":
-			game.selectCharacter(playerId,payload["character"])
+			game.select_character(playerId,payload["character"])
 		elif event == "entered_game":
 			game.enteredGame(playerId)
 		elif event == "start_game":
-			game.startGame()
+			game.start_game()
 		
 		elif event == "move_choice":
 			game.selectMove(playerId,payload["choice"])
 		elif event == "card_choice":
 			game.selectCard(playerId,payload["choice"])
 		elif event == "pass_turn":
-			game.passTurn(playerId)
+			game.end_turn(playerId)
 			
 		# SUGGESTION HANDLERS
 		elif event == "suggestion_start":
-			game.startSuggestion(playerId)
+			game.make_suggestion(playerId)
 		elif event == "suggestion_choice":
 			game.chooseSuggestion(playerId,payload["suspect"],payload["weapon"],payload["room"])
 		elif event == "suggestion_trial":
@@ -197,12 +197,15 @@ if __name__ == "__main__": # Safeguard against accidental imports
 		
 		# ACCUSATION HANDLERS
 		elif event == "accusation_start":
-			game.startSuggestion(playerId)
+			game.make_accusation(playerId)
 		elif event == "accusation_choice":
 			game.chooseSuggestion(playerId,payload["suspect"],payload["weapon"],payload["room"])
+		
+		/// REMOVE there is no accusation trial, its part of make accusation
 		elif event == "accusation_trial": # TODO THIS MIGHT BE REDUNDANT BECAUSE OF CARD CHOICE
 			game.disproveSuggestion(playerId,payload["card"],payload["type"],payload["cannotDisprove"])
 			
+
 		elif event == "disconnect":
 			game.removePlayer(playerId)
 		
