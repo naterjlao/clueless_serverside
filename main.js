@@ -94,7 +94,6 @@ log('PYTHON LISTENER THREAD SPAWNED');
 * INSTANCE VARIABLES
 ******************************************************************************/
 
-// DEPRECATE
 /*
 	Stores the socket object for each client.
 	Every element has an associated clientId
@@ -105,10 +104,8 @@ clients = [];
 */
 clientIds = ["player0","player1","player2","player3","player4","player5","player6"]
 clientIDidx = 0
-// END OF DEPRECATE
 
-
-// Stores all game instances (NOT USED)
+// Stores all game instances (NOT CURRENTLY USED)
 games = [];
 
 /******************************************************************************
@@ -140,6 +137,13 @@ function log(message,type=GENERAL_LOG) {
 	}
 }
 
+/* Logs information about payload data sent to the backend */
+function logReceivePayload(data) {
+	log(">>> START OF PAYLOAD DATA >>>",INCOMING_SIGNAL_LOG);
+	log(JSON.stringify(data),INCOMING_SIGNAL_LOG);
+	log(">>> END OF PAYLOAD DATA >>>",INCOMING_SIGNAL_LOG);
+}
+
 /* Log out crash info if the backend listener nopes out */
 backend.stderr.on('data', (big_oof) => {
 	log(big_oof,CRASH_LOG);
@@ -150,7 +154,6 @@ backend.stderr.on('data', (big_oof) => {
 ******************************************************************************/
 
 /* Recursively finds the Client's IP based on the socket input object */
-// NOTE - sooo this works, but there's implied issues with this bit
 function findClientIP(client) {
 	clientId = null;
 	for (var key in client) {
@@ -171,15 +174,10 @@ function findClientIP(client) {
 /*
 	Returns a client for the given client
 */
-function createClientID(client) {
-	/* // DEPRECATED
-	clientId = clientIds[clientIDidx];
-	clientIDidx = (clientIDidx + 1) % clientIds.length; // TODO this is a band aid
-	*/
-	
+function createClientID(client) {	
 	clientId = clientIds.shift(); // Remove from the beggining of the array
-	log("CREATED CLIENT ID: ".concat(clientId));
-
+	logOut = "ASSIGNING CLIENT ID: ".concat(clientId);
+	logOut+= " TO ".concat(findClientIP(client));
 	return clientId;
 }
 
@@ -189,6 +187,7 @@ function createClientID(client) {
 	- Associates a field within client (ie. client.clientId)
 	- Have the Client join the server in a "room" (for individual client updates)
 	- Adds it to the Server's Clients list so that they can be tagged and sold to the blackmarket.
+	- Shoots out `startInfo` signal to the client that was just added to the server
 */
 function addClient(client) {
 	client.clientId = createClientID(client);
@@ -197,7 +196,8 @@ function addClient(client) {
 
 	client.join(clientId);   // the client is joined in a "room" named after the clientId
 	clients.push(client);    // add the client to client list
-
+	client.emit('startInfo',{player:clientId});
+	
 	log("ADDED CLIENT: ".concat(client.clientId));
 	log("AVAILABLE CLIENT IDs: ".concat(clientIds));
 }
@@ -241,9 +241,9 @@ function sendToBackend(clientId,eventName,payload) {
 		};
 	signal = JSON.stringify(signal);	// absolutely necessary
 	signal = signal.concat('\n');		// also absolutely necessary
-	log(">>> START OF RAW BACKEND STRING <<<",INCOMING_SIGNAL_LOG);
+	log(">>> START OF RAW BACKEND INPUT DATA >>>",INCOMING_SIGNAL_LOG);
 	log(signal,INCOMING_SIGNAL_LOG);
-	log(">>> END OF RAW BACKEND STRING <<<",INCOMING_SIGNAL_LOG);
+	log(">>> END OF RAW BACKEND INPUT DATA >>>",INCOMING_SIGNAL_LOG);
 	backend.stdin.write(signal);		// Spit out to stdin!
 }
 
@@ -271,19 +271,19 @@ backend.stdout.on('data', (data) => {
 		/* Disregard empty strings */
 		if (chunk.length > 0) {
 
-			log("<<< START OF BACKEND RAW DATA >>>");
+			log("<<< START OF BACKEND OUTPUT DATA <<<");
 			log(chunk);
-			log("<<< END OF BACKEND RAW DATA >>>");
+			log("<<< END OF BACKEND OUTPUT DATA <<<");
 			log("LENGTH OF PARSING STRING=".concat(chunk.length));
 
 			/* Parse the chunk into a dictionary object */
 			signal = JSON.parse(chunk);
-			log(">>> SENDING SIGNAL TO: ".concat(signal.clientId.toString()),OUTGOING_SIGNAL_LOG);
-			log(">>> EVENT SIGNATURE: ".concat(signal.eventName.toString()),OUTGOING_SIGNAL_LOG);
+			log("<<< SENDING SIGNAL TO: ".concat(signal.clientId.toString()),OUTGOING_SIGNAL_LOG);
+			log("<<< EVENT SIGNATURE: ".concat(signal.eventName.toString()),OUTGOING_SIGNAL_LOG);
 			if (signal.payload.constructor == Object) {
-				log("<<< START OF SIGNAL PAYLOAD >>>",OUTGOING_SIGNAL_LOG);
+				log("<<< START OF OUTPUT SIGNAL PAYLOAD <<<",OUTGOING_SIGNAL_LOG);
 				log(JSON.stringify(signal.payload),OUTGOING_SIGNAL_LOG);
-				log("<<< END OF SIGNAL PAYLOAD >>>",OUTGOING_SIGNAL_LOG);
+				log("<<< END OF SIGNAL PAYLOAD <<<",OUTGOING_SIGNAL_LOG);
 			}
 
 			/* Send out the signal depending on the clientId tag */
@@ -317,6 +317,7 @@ mainSocket.on('connection', client => {
 		- Associates a field within client (ie. client.clientId)
 		- Have the Client join the server in a "room" (for individual client updates)
 		- Adds it to the Server's Clients list so that they can be tagged and sold to the blackmarket.
+		- Shoots out `startInfo` signal to the client that was just added to the server
 	*/
 	addClient(client);
 
@@ -325,157 +326,69 @@ mainSocket.on('connection', client => {
 		These are tied to the SENDER functions in the server.service.ts component
 		in the Frontend subsystem.
 	**************************************************************************/
-	
-	/* THESE ARE NEW!!!!! */
-	client.on('move_choice', (payload) => {
-		log("RECIEVED move_choice SIGNAL",INCOMING_SIGNAL_LOG);
-		sendToBackend(client.clientId,'move_choice',payload);
-	});
-	
-	client.on('card_choice', (payload) => {
-		log("RECIEVED card_choice SIGNAL",INCOMING_SIGNAL_LOG);
-		sendToBackend(client.clientId,'card_choice',payload);
-	});
-	
-	
-	// DEPRECATE
-	client.on('entered_client_select', (data) => {
-		log("RECIEVED entered_client_select SIGNAL",INCOMING_SIGNAL_LOG);
-		sendToBackend(client.clientId,'entered_client_select',data);
+   
+   /**********************************************
+     PREGAME SIGNALS
+   **********************************************/
+	client.on('entered_player_select', (data) => {
+		log("RECIEVED entered_player_select SIGNAL",INCOMING_SIGNAL_LOG);
+		logReceivePayload(data)
+		sendToBackend(client.clientId,'entered_player_select',data);
 	});
 
-	// DEPRECATE
-	client.on('entered_client_select', (data) => {
-		log("RECIEVED entered_client_select SIGNAL",INCOMING_SIGNAL_LOG);
-		sendToBackend(client.clientId,'entered_client_select',data);
-	});
-
-	// DEPRECATE?
-	client.on('entered_game', () => {
-		log("RECIEVED entered_game SIGNAL",INCOMING_SIGNAL_LOG);
-		sendToBackend(client.clientId,'entered_game',null);
-	});
-
-	// DEPRECATE?
-	client.on('start_game', (data) => {
-		/* data format:
-		  {
-			clientId: string
-		  }
-		*/
-		log("RECIEVED start_game SIGNAL",INCOMING_SIGNAL_LOG);
-		log(">>> START OF PAYLOAD DATA <<<",INCOMING_SIGNAL_LOG);
-		log(JSON.stringify(data),INCOMING_SIGNAL_LOG);
-		log(">>> END OF PAYLOAD DATA <<<",INCOMING_SIGNAL_LOG);
-
-		sendToBackend(client.clientId,'start_game',data);
-	});
-
-	// DEPRECATE
-	client.on('move', (data) => {
-		/* data format:
-		  {
-			clientId: string,
-			direction: string
-		  }
-		*/
-		log("RECIEVED move SIGNAL",INCOMING_SIGNAL_LOG);
-		log(">>> START OF PAYLOAD DATA <<<",INCOMING_SIGNAL_LOG);
-		log(JSON.stringify(data),INCOMING_SIGNAL_LOG);
-		log(">>> END OF PAYLOAD DATA <<<",INCOMING_SIGNAL_LOG);
-
-		sendToBackend(client.clientId,'move',data);
-	});
-
-	// DEPRECATE
-	client.on('make_suggestion', (data) => {
-		/* data format:
-		  {
-			clientId: string,
-			suspect: string,
-			weapon: string,
-			room: string
-		  }
-		*/
-		log("RECIEVED make_suggestion SIGNAL",INCOMING_SIGNAL_LOG);
-		log(">>> START OF PAYLOAD DATA <<<",INCOMING_SIGNAL_LOG);
-		log(JSON.stringify(data),INCOMING_SIGNAL_LOG);
-		log(">>> END OF PAYLOAD DATA <<<",INCOMING_SIGNAL_LOG);
-
-		sendToBackend(client.clientId,'make_suggestion',data);
-	});
-
-	// DEPRECATE
-	client.on('make_accusation', (data) => {
-		/* data format:
-		  {
-			clientId: string,
-			suspect: string,
-			weapon: string,
-			room: string
-		  }
-		*/
-		log("RECIEVED make_accusation SIGNAL",INCOMING_SIGNAL_LOG);
-		log(">>> START OF PAYLOAD DATA <<<",INCOMING_SIGNAL_LOG);
-		log(JSON.stringify(data),INCOMING_SIGNAL_LOG);
-		log(">>> END OF PAYLOAD DATA <<<",INCOMING_SIGNAL_LOG);
-
-		sendToBackend(client.clientId,'make_accusation',data);
-	});
-
-	// DEPRECATE
-	client.on('pass_turn', (data) => {
-		/* data format:
-			{
-				clientId: string
-			}
-		*/
-		log("RECIEVED pass_turn SIGNAL",INCOMING_SIGNAL_LOG);
-		log(">>> START OF PAYLOAD DATA <<<",INCOMING_SIGNAL_LOG);
-		log(JSON.stringify(data),INCOMING_SIGNAL_LOG);
-		log(">>> END OF PAYLOAD DATA <<<",INCOMING_SIGNAL_LOG);
-
-		sendToBackend(client.clientId,'pass_turn',data);
-	});
-
-	// DEPRECATE
-	client.on('make_move', (data) => {
-		/* data format:
-		  {
-			clientId: string,
-			suspect: string,
-			room: string
-		  }
-		*/
-		log("RECIEVED make_move SIGNAL",INCOMING_SIGNAL_LOG);
-		log(">>> START OF PAYLOAD DATA <<<",INCOMING_SIGNAL_LOG);
-		log(JSON.stringify(data),INCOMING_SIGNAL_LOG);
-		log(">>> END OF PAYLOAD DATA <<<",INCOMING_SIGNAL_LOG);
-
-		sendToBackend(client.clientId,'make_move',data);
-	});
-
-	// DEPRECATE
 	client.on('select_character', (data) => {
-		/* data format:
-		  {
-			clientId: string,
-			character: string
-		  }
-		*/
 		log("RECIEVED select_character SIGNAL",INCOMING_SIGNAL_LOG);
-		log(">>> START OF PAYLOAD DATA <<<",INCOMING_SIGNAL_LOG);
-		log(JSON.stringify(data),INCOMING_SIGNAL_LOG);
-		log(">>> END OF PAYLOAD DATA <<<",INCOMING_SIGNAL_LOG);
-
+		logReceivePayload(data)
 		sendToBackend(client.clientId,'select_character',data);
 	});
-
-	// SPECIAL CASE SIGNAL
-	client.on('disconnect', () => {
+	
+	client.on('entered_game', (data) => {
+		log("RECIEVED entered_game SIGNAL",INCOMING_SIGNAL_LOG);
+		logReceivePayload(data)
+		sendToBackend(client.clientId,'entered_game',data);
+	});
+	
+	client.on('start_game', (data) => {
+		log("RECIEVED start_game SIGNAL",INCOMING_SIGNAL_LOG);
+		logReceivePayload(data)
+		sendToBackend(client.clientId,'start_game',data);
+	});
+	
+   /**********************************************
+     GAME IN-PROGRESS SIGNALS
+   **********************************************/
+	client.on('move_choice', (data) => {
+		log("RECIEVED move_choice SIGNAL",INCOMING_SIGNAL_LOG);
+		logReceivePayload(data)
+		sendToBackend(client.clientId,'move_choice',data);
+	});
+	
+	client.on('make_suggestion', (data) => {
+		log("RECIEVED make_suggestion SIGNAL",INCOMING_SIGNAL_LOG);
+		logReceivePayload(data)
+		sendToBackend(client.clientId,'make_suggestion',data);
+	});
+	
+	client.on('make_accusation', (data) => {
+		log("RECIEVED make_accusation SIGNAL",INCOMING_SIGNAL_LOG);
+		logReceivePayload(data)
+		sendToBackend(client.clientId,'make_accusation',data);
+	});
+	
+	client.on('card_choice', (data) => {
+		log("RECIEVED card_choice SIGNAL",INCOMING_SIGNAL_LOG);
+		logReceivePayload(data)
+		sendToBackend(client.clientId,'card_choice',data);
+	});
+	
+	
+   /**********************************************
+     OTHER SIGNALS
+   **********************************************/
+	client.on('disconnect', (data) => {
 		log("RECIEVED disconnect SIGNAL",INCOMING_SIGNAL_LOG);
-
+		logReceivePayload(data)
 		removeClient(client)
-		sendToBackend(client.clientId,'disconnect',null);
+		sendToBackend(client.clientId,'disconnect',data);
 	});
 });

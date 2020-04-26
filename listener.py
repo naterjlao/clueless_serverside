@@ -61,17 +61,19 @@ sys.path.append('/opt/clueless/src/backend')
 from Server import Game
 
 ################################################################################
-# STATIC GLOBAL VARIABLES
+# PAYLOAD SIGNATURE LABELS
 ################################################################################
 PLAYER_ID = 'playerId'
-EVENT = 'eventName' # NOTE - Javascript has 'event' as a reserved keyword!
-PAYLOAD = 'payload'
-DIRTY = 'dirty' # key name if TRUE - the status/payload has been modified
+EVENT     = 'eventName' # NOTE - Javascript has 'event' as a reserved keyword!
+PAYLOAD   = 'payload'
+DIRTY     = 'dirty'     # if TRUE - the status/payload has been modified on the backend
+						# only used if FORCE_UPDATE is False
 
 ################################################################################
-# DEBUG
+# SETTINGS
 ################################################################################
 DEBUG = True
+FORCE_UPDATE = True		# if True, player specific
 
 ################################################################################
 # AUXILIARY FUNCTIONS
@@ -93,13 +95,20 @@ def sendToPlayer(playerId,event,sendData):
 def sendToAll(event,sendData):
 	sendToPlayer("all",event,sendData)
 
+# Accepts an input string signal from the Frontend and Serverside/main.js
+# Returns a tuple: (<playerId : string>, <signalEvent : string>,<payload : dict>)
+def parseRecieveSignal(signal):
+	signal = signal.strip()     # Remove any leading of trailing whitespace
+	signal = json.loads(signal) # Convert into a dictionary
+	return signal[PLAYER_ID], signal[EVENT], signal[PAYLOAD]
+
 ################################################################################
 # MAIN
 ################################################################################
 if __name__ == "__main__": # Safeguard against accidental imports
 
 	################################################################################
-	# GENERATE THE GAME INSTANCE
+	# INITIALIZE THE GAME INSTANCE
 	################################################################################
 	game = Game()
 
@@ -107,45 +116,53 @@ if __name__ == "__main__": # Safeguard against accidental imports
 	while True:
 	
 		########################################################################
-		# Send out these signals after every cycle
+		# OUTPUT SIGNALS (sent first and after every signal cycle)
 		########################################################################
-		gamestate    = game.getGamestate()    # For all (dict) # TODO who's turn, list of players
-		gameboard    = game.getGameboard()    # For all (dict)
-		playerstates = game.getPlayerstates() # Player dependent (list of dicts)
-		checklists   = game.getChecklists()   # Player dependent (list of dicts)
-		moveoptions  = game.getMoveOptions()  # Player dependent (list of dicts)
-		cardlists    = game.getCardLists()    # Player dependent (list of dicts)
-		messages     = game.getMessages()     # Player dependent (list of dicts)
+		#startinfo (handled in main.js)
+		availchars   = game.getAvailableChars()		# For all (dict)
+		gamestate    = game.getGamestate()    		# For all (dict) # TODO who's turn, list of players
+		gameboard    = game.getGameboard()    		# For all (dict)
+		playerstates = game.getPlayerstates() 		# Player dependent (list of dicts)
+		checklists   = game.getChecklists()   		# Player dependent (list of dicts)
+		moveoptions  = game.getMoveOptions()  		# Player dependent (list of dicts)
+		cardlists    = game.getCardLists()    		# Player dependent (list of dicts)
+		messages     = game.getMessages()     		# Player dependent (list of dicts)
 		
 		# Global signals
+		sendToAll("available_characters",availchars)
 		sendToAll("gamestate", gamestate)
 		sendToAll("gameboard", gameboard)
 		
 		# Player dependent signals
-		for elem in playerstates:
-			if elem[DIRTY]:
-				sendToPlayer(elem[PLAYER_ID],'playerstate',elem[PAYLOAD])
-		for elem in checklists:
-			if elem[DIRTY]:
-				sendToPlayer(elem[PLAYER_ID],'checklist',elem[PAYLOAD])
-		for elem in moveoptions:
-			if elem[DIRTY]:
-				sendToPlayer(elem[PLAYER_ID],'moveoptions',elem[PAYLOAD])
-		for elem in cardlists:
-			if elem[DIRTY]:
-				sendToPlayer(elem[PLAYER_ID],'cardlist',elem[PAYLOAD])
-		for elem in messages:
-			if elem[DIRTY]:
-				sendToPlayer(elem[PLAYER_ID],'message',elem[PAYLOAD])
+		# We iterate through a list of dictionaries each containing
+		# the target playerId.
+		# If FORCE_UPDATE is True (see above), then the signal is sent
+		# no matter what. Else, if the DIRTY key in each dictionary
+		# is set to True, we send the signal.
+		# If FORCE_UPDATE is False and the message has not been updated
+		# between it being sent or not, do not send the signal to that
+		# player.
+		for player in playerstates:
+			if FORCE_UPDATE or player[DIRTY]:
+				sendToPlayer(player[PLAYER_ID],'playerstate',player[PAYLOAD])
+		for player in checklists:
+			if FORCE_UPDATE or player[DIRTY]:
+				sendToPlayer(player[PLAYER_ID],'checklist',player[PAYLOAD])
+		for player in moveoptions:
+			if FORCE_UPDATE or player[DIRTY]:
+				sendToPlayer(player[PLAYER_ID],'move_options',player[PAYLOAD])
+		for player in cardlists:
+			if FORCE_UPDATE or player[DIRTY]:
+				sendToPlayer(player[PLAYER_ID],'card_list',player[PAYLOAD])
+		for player in messages:
+			if FORCE_UPDATE or elem[DIRTY]:
+				sendToPlayer(player[PLAYER_ID],'message',player[PAYLOAD])
 	
 		########################################################################
 		# Retrieve any signal that any Client sends and send to the Game
 		########################################################################
 		signal = input() # Execution will pause at this point until a messsage is recieved
-		signal = signal.strip()
-		signal = json.loads(signal) # data is coverted to a dictionary
-		# Retrieve the information from the Client signal
-		playerId, event, payload = signal[PLAYER_ID], signal[EVENT], signal[PAYLOAD]
+		playerId, event, payload = parseRecieveSignal(signal)
 		
 		# TODO make_accusations
 		# to backend-> make_suggestion: contain information about the thing
