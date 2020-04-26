@@ -191,7 +191,7 @@ if __name__ == "__main__": # Safeguard against accidental imports
 		elif event == "suggestion_start":
 			game.make_suggestion(playerId)
 		elif event == "suggestion_choice":
-			game.chooseSuggestion(playerId,payload["suspect"],payload["weapon"],payload["room"])
+			game.get_suggestion_options(playerId,payload["current_room"])
 		elif event == "suggestion_trial":
 			game.disproveSuggestion(playerId,payload["card"],payload["type"],payload["cannotDisprove"])
 		
@@ -199,7 +199,7 @@ if __name__ == "__main__": # Safeguard against accidental imports
 		elif event == "accusation_start":
 			game.make_accusation(playerId)
 		elif event == "accusation_choice":
-			game.chooseSuggestion(playerId,payload["suspect"],payload["weapon"],payload["room"])
+			game.get_accusation_options()
 		
 		/// REMOVE there is no accusation trial, its part of make accusation
 		elif event == "accusation_trial": # TODO THIS MIGHT BE REDUNDANT BECAUSE OF CARD CHOICE
