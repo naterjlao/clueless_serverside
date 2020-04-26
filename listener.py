@@ -175,6 +175,8 @@ if __name__ == "__main__": # Safeguard against accidental imports
 			game.add_player(playerId)
 		elif event == "select_character":
 			game.select_character(playerId,payload["character"])
+		
+		#IS THIS RELEVANT TO BACKEND?
 		elif event == "entered_game":
 			game.enteredGame(playerId)
 		elif event == "start_game":
@@ -182,6 +184,8 @@ if __name__ == "__main__": # Safeguard against accidental imports
 		
 		elif event == "move_choice":
 			game.selectMove(playerId,payload["choice"])
+		
+		# EXPLANATION? 
 		elif event == "card_choice":
 			game.selectCard(playerId,payload["choice"])
 		elif event == "pass_turn":
@@ -192,6 +196,9 @@ if __name__ == "__main__": # Safeguard against accidental imports
 			game.make_suggestion(playerId)
 		elif event == "suggestion_choice":
 			game.get_suggestion_options(playerId,payload["current_room"])
+		
+		
+		#TODO(MAY1
 		elif event == "suggestion_trial":
 			game.disproveSuggestion(playerId,payload["card"],payload["type"],payload["cannotDisprove"])
 		
@@ -201,11 +208,11 @@ if __name__ == "__main__": # Safeguard against accidental imports
 		elif event == "accusation_choice":
 			game.get_accusation_options()
 		
-		/// REMOVE there is no accusation trial, its part of make accusation
+		#REMOVE ME there is no accusation trial, its part of make accusation
 		elif event == "accusation_trial": # TODO THIS MIGHT BE REDUNDANT BECAUSE OF CARD CHOICE
 			game.disproveSuggestion(playerId,payload["card"],payload["type"],payload["cannotDisprove"])
 			
 
 		elif event == "disconnect":
-			game.removePlayer(playerId)
+			game.remove_player(playerId)
 		
