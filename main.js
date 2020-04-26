@@ -196,7 +196,7 @@ function addClient(client) {
 
 	client.join(clientId);   // the client is joined in a "room" named after the clientId
 	clients.push(client);    // add the client to client list
-	client.emit('startInfo',{player:clientId});
+	client.emit('startInfo',{player:clientId}); // TODO DEPRECATE taken by playerstate
 	
 	log("ADDED CLIENT: ".concat(client.clientId));
 	log("AVAILABLE CLIENT IDs: ".concat(clientIds));
@@ -363,16 +363,28 @@ mainSocket.on('connection', client => {
 		sendToBackend(client.clientId,'move_choice',data);
 	});
 	
-	client.on('make_suggestion', (data) => {
-		log("RECIEVED make_suggestion SIGNAL",INCOMING_SIGNAL_LOG);
+	client.on('suggestion_start', (data) => {
+		log("RECIEVED suggestion_start SIGNAL",INCOMING_SIGNAL_LOG);
 		logReceivePayload(data)
-		sendToBackend(client.clientId,'make_suggestion',data);
+		sendToBackend(client.clientId,'suggestion_start',data);
+	});
+
+	client.on('accusation_start', (data) => {
+		log("RECIEVED accusation_start SIGNAL",INCOMING_SIGNAL_LOG);
+		logReceivePayload(data)
+		sendToBackend(client.clientId,'accusation_start',data);
 	});
 	
-	client.on('make_accusation', (data) => {
-		log("RECIEVED make_accusation SIGNAL",INCOMING_SIGNAL_LOG);
+	client.on('suggestion_choice', (data) => {
+		log("RECIEVED suggestion_choice SIGNAL",INCOMING_SIGNAL_LOG);
 		logReceivePayload(data)
-		sendToBackend(client.clientId,'make_accusation',data);
+		sendToBackend(client.clientId,'suggestion_choice',data);
+	});
+	
+	client.on('accusation_choice', (data) => {
+		log("RECIEVED accusation_choice SIGNAL",INCOMING_SIGNAL_LOG);
+		logReceivePayload(data)
+		sendToBackend(client.clientId,'accusation_choice',data);
 	});
 	
 	client.on('card_choice', (data) => {
@@ -381,6 +393,11 @@ mainSocket.on('connection', client => {
 		sendToBackend(client.clientId,'card_choice',data);
 	});
 	
+	client.on('pass_turn', (data) => {
+		log("RECIEVED pass_turn SIGNAL",INCOMING_SIGNAL_LOG);
+		logReceivePayload(data)
+		sendToBackend(client.clientId,'pass_turn',data);
+	});
 	
    /**********************************************
      OTHER SIGNALS

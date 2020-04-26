@@ -118,18 +118,19 @@ if __name__ == "__main__": # Safeguard against accidental imports
 		########################################################################
 		# OUTPUT SIGNALS (sent first and after every signal cycle)
 		########################################################################
-		#startinfo (handled in main.js)
-		availchars   = game.getAvailableChars()		# For all (dict)
-		gamestate    = game.getGamestate()    		# For all (dict) # TODO who's turn, list of players
-		gameboard    = game.getGameboard()    		# For all (dict)
-		playerstates = game.getPlayerstates() 		# Player dependent (list of dicts)
-		checklists   = game.getChecklists()   		# Player dependent (list of dicts)
-		moveoptions  = game.getMoveOptions()  		# Player dependent (list of dicts)
-		cardlists    = game.getCardLists()    		# Player dependent (list of dicts)
-		messages     = game.getMessages()     		# Player dependent (list of dicts)
+		#startinfo (handled in playerstate)
+		#availchars (handled in gamestate)
+		gamestate      = game.getGamestate()    		# For all (dict) # TODO who's turn, list of players, availableCharacters
+		gameboard      = game.getGameboard()    		# For all (dict)
+		playerstates   = game.getPlayerstates() 		# Player dependent (list of dicts) # TODO availableCharacters
+		moveoptions    = game.getMoveOptions()  		# Player dependent (list of dicts)
+		suggestOptions = game.getSuggestionOptions()	# Player dependent (list of dicts)
+		accuseOptions  = game.getSuggestionOptions()	# Player dependent (list of dicts)
+		checklists     = game.getChecklists()   		# Player dependent (list of dicts)
+		cardlists      = game.getCardLists()    		# Player dependent (list of dicts)
+		messages       = game.getMessages()     		# Player dependent (list of dicts)
 		
 		# Global signals
-		sendToAll("available_characters",availchars)
 		sendToAll("gamestate", gamestate)
 		sendToAll("gameboard", gameboard)
 		
@@ -145,12 +146,18 @@ if __name__ == "__main__": # Safeguard against accidental imports
 		for player in playerstates:
 			if FORCE_UPDATE or player[DIRTY]:
 				sendToPlayer(player[PLAYER_ID],'playerstate',player[PAYLOAD])
-		for player in checklists:
-			if FORCE_UPDATE or player[DIRTY]:
-				sendToPlayer(player[PLAYER_ID],'checklist',player[PAYLOAD])
 		for player in moveoptions:
 			if FORCE_UPDATE or player[DIRTY]:
 				sendToPlayer(player[PLAYER_ID],'move_options',player[PAYLOAD])
+		for player in suggestOptions:
+			if FORCE_UPDATE or player[DIRTY]:
+				sendToPlayer(player[PLAYER_ID],'suggestion_options',player[PAYLOAD])
+		for player in accuseOptions:
+			if FORCE_UPDATE or player[DIRTY]:
+				sendToPlayer(player[PLAYER_ID],'accusation_options',player[PAYLOAD])
+		for player in checklists:
+			if FORCE_UPDATE or player[DIRTY]:
+				sendToPlayer(player[PLAYER_ID],'checklist',player[PAYLOAD])
 		for player in cardlists:
 			if FORCE_UPDATE or player[DIRTY]:
 				sendToPlayer(player[PLAYER_ID],'card_list',player[PAYLOAD])
@@ -164,25 +171,38 @@ if __name__ == "__main__": # Safeguard against accidental imports
 		signal = input() # Execution will pause at this point until a messsage is recieved
 		playerId, event, payload = parseRecieveSignal(signal)
 		
-		# TODO make_accusations
-		# to backend-> make_suggestion: contain information about the thing
-		# to client -> message player X won/lose for ALL
-		# to client -> if failed: update gamestate so that the current player is now the next player
-		# to client -> if success: update gamestate somehow to indicated the game is over and winner is declared
+		if   event == "entered_player_select":
+			game.addPlayer(playerId)
+		elif event == "select_character":
+			game.selectCharacter(playerId,payload["character"])
+		elif event == "entered_game":
+			game.enteredGame(playerId)
+		elif event == "start_game":
+			game.startGame()
 		
-		# TODO make_suggestions
-		# to clientX-> suggestion_enable
-		# to backend-> make_suggestion: contains information (except for ROOM)
-		# to clientALL-> an updated gameboard to move clientY to the ROOM
-		# todotodotodo
-		# to backend-> suggestion_response: disprove or cannot disprove
-		
-		if event == "move_choice":
+		elif event == "move_choice":
 			game.selectMove(playerId,payload["choice"])
 		elif event == "card_choice":
 			game.selectCard(playerId,payload["choice"])
+		elif event == "pass_turn":
+			game.passTurn(playerId)
+			
+		# SUGGESTION HANDLERS
+		elif event == "suggestion_start":
+			game.startSuggestion(playerId)
+		elif event == "suggestion_choice":
+			game.chooseSuggestion(playerId,payload["suspect"],payload["weapon"],payload["room"])
+		elif event == "suggestion_trial":
+			game.disproveSuggestion(playerId,payload["card"],payload["type"],payload["cannotDisprove"])
+		
+		# ACCUSATION HANDLERS
+		elif event == "accusation_start":
+			game.startSuggestion(playerId)
+		elif event == "accusation_choice":
+			game.chooseSuggestion(playerId,payload["suspect"],payload["weapon"],payload["room"])
+		elif event == "accusation_trial": # TODO THIS MIGHT BE REDUNDANT BECAUSE OF CARD CHOICE
+			game.disproveSuggestion(playerId,payload["card"],payload["type"],payload["cannotDisprove"])
 			
 		elif event == "disconnect":
 			game.removePlayer(playerId)
-		
 		
