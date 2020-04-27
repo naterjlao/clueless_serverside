@@ -73,7 +73,8 @@ DIRTY     = 'dirty'     # if TRUE - the status/payload has been modified on the 
 # SETTINGS
 ################################################################################
 DEBUG = True
-FORCE_UPDATE = True		# if True, player specific
+FORCE_UPDATE = True		# if True, player specific backend payloads are not checked
+						# if they are modified
 
 ################################################################################
 # AUXILIARY FUNCTIONS

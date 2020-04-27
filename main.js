@@ -98,15 +98,14 @@ log('PYTHON LISTENER THREAD SPAWNED');
 	Stores the socket object for each player.
 	Every element has an associated playerId
 */
-players = [];
+var players = [];
 /*
 	These names have to spelled out this way - it is absolutely necessary for the frontend
 */
-playerIds = ["player0","player1","player2","player3","player4","player5","player6"]
-playerIDidx = 0
+var playerIds = ["player0","player1","player2","player3","player4","player5","player6"]
 
 // Stores all game instances (NOT CURRENTLY USED)
-games = [];
+var games = [];
 
 /******************************************************************************
 * LOGGING
@@ -155,7 +154,7 @@ backend.stderr.on('data', (big_oof) => {
 
 /* Recursively finds the Player's IP based on the socket input object */
 function findPlayerIP(player) {
-	playerId = null;
+	var playerId = null;
 	for (var key in player) {
 		if (key == "address") {
 			playerId = player[key];
@@ -175,9 +174,10 @@ function findPlayerIP(player) {
 	Returns a player for the given player
 */
 function createPlayerID(player) {	
-	playerId = playerIds.shift(); // Remove from the beggining of the array
-	logOut = "ASSIGNING PLAYER ID: ".concat(playerId);
+	var playerId = playerIds.shift(); // Remove from the beggining of the array
+	var logOut = "ASSIGNING PLAYER ID: ".concat(playerId);
 	logOut+= " TO ".concat(findPlayerIP(player));
+	log(logOut);
 	return playerId;
 }
 
@@ -204,7 +204,7 @@ function addPlayer(player) {
 
 /* Returns the Player that is associated with the PlayerID */
 function getPlayer(playerId) {
-	target = null;
+	var target = null;
 	// I hate javascript, I have to create a GD function
 	// in order to do simple for loop...
 	players.forEach(player => {
@@ -234,7 +234,7 @@ function removePlayer(player) {
 
 /* Shoots a signal to the backend listener */
 function sendToBackend(playerId,eventName,payload) {
-	signal = {
+	var signal = {
 			'playerId' : playerId,
 			'eventName': eventName,
 			'payload'  : payload
@@ -290,7 +290,7 @@ backend.stdout.on('data', (data) => {
 
 			// Send to a specified player
 			if (signal.playerId != "all") {
-				player = getPlayer(signal.playerId);
+				var player = getPlayer(signal.playerId);
 				player.emit(signal.eventName,signal.payload);
 			}
 
