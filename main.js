@@ -223,10 +223,10 @@ function removePlayer(player) {
 	player.leave(player.playerId);
 	
 	// (I hate javascript) remove the player from the list of players
-	players.splice(players.indexOf(playerId),players.indexOf(playerId));
+	players.splice(players.indexOf(player.playerId),players.indexOf(player.playerId));
 	
 	// Push the ID back to available IDs that could be handed out
-	playerIds.push(playerId);
+	playerIds.push(player.playerId);
 
 	log("REMOVED PLAYER: ".concat(player.playerId));
 	log("AVAILABLE PLAYER IDs: ".concat(playerIds));
