@@ -122,12 +122,12 @@ if __name__ == "__main__": # Safeguard against accidental imports
 		#availchars (handled in gamestate)
 		gamestate      = game.getGamestate()    		# For all (dict) # TODO who's turn, list of players, availableCharacters
 		gameboard      = game.getGameboard()    		# For all (dict)
-		playerstates   = game.getPlayerstates() 		# Player dependent (list of dicts) # TODO availableCharacters
+		playerstates   = game.getPlayerstates() 		# Player dependent (list of dicts)
 		moveoptions    = game.getMoveOptions()  		# Player dependent (list of dicts)
 		suggestOptions = game.getSuggestionOptions()	# Player dependent (list of dicts)
-		accuseOptions  = game.getSuggestionOptions()	# Player dependent (list of dicts)
+		accuseOptions  = game.getAccusationOptions()	# Player dependent (list of dicts)
 		checklists     = game.getChecklists()   		# Player dependent (list of dicts)
-		cardlists      = game.getCardLists()    		# Player dependent (list of dicts)
+		cardlists      = game.getCardlists()    		# Player dependent (list of dicts)
 		messages       = game.getMessages()     		# Player dependent (list of dicts)
 		
 		# Global signals
@@ -210,7 +210,7 @@ if __name__ == "__main__": # Safeguard against accidental imports
 		
 		#REMOVE ME there is no accusation trial, its part of make accusation
 		elif event == "accusation_trial": # TODO THIS MIGHT BE REDUNDANT BECAUSE OF CARD CHOICE
-			game.disproveSuggestion(playerId,payload["card"],payload["type"],payload["cannotDisprove"])
+			game.disproveAccusation(playerId,payload["card"],payload["type"],payload["cannotDisprove"])
 			
 
 		elif event == "disconnect":
