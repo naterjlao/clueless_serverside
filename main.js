@@ -194,9 +194,9 @@ function addPlayer(player) {
 
 	log("ADDING PLAYER: ".concat(player.playerId));
 
-	player.join(playerId);   // the player is joined in a "room" named after the playerId
+	player.join(player.playerId);   // the player is joined in a "room" named after the playerId
 	players.push(player);    // add the player to player list
-	player.emit('startInfo',{player:playerId}); // TODO DEPRECATE taken by playerstate
+	player.emit('startInfo',{player:player.playerId}); // TODO DEPRECATE taken by playerstate
 	
 	log("ADDED PLAYER: ".concat(player.playerId));
 	log("AVAILABLE PLAYER IDs: ".concat(playerIds));
