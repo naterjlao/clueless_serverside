@@ -215,5 +215,5 @@ if __name__ == "__main__": # Safeguard against accidental imports
 			
 
 		elif event == "disconnect":
-			game.remove_player(playerId)
+			game.remove_player() # TODO removed playerId - I guess we remove everyone?
 		
