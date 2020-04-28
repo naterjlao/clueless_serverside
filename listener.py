@@ -184,7 +184,7 @@ if __name__ == "__main__": # Safeguard against accidental imports
 			game.start_game()
 		
 		elif event == "move_choice":
-			game.selectMove(playerId,payload["choice"])
+			game.make_move(playerId,payload["character"],payload["room"])
 		
 		# EXPLANATION? 
 		elif event == "card_choice":
