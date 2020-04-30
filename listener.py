@@ -58,7 +58,7 @@
 import json
 import sys
 sys.path.append('/opt/clueless/src/backend')
-from Server import Game
+from game import Game
 
 ################################################################################
 # PAYLOAD SIGNATURE LABELS
@@ -172,48 +172,38 @@ if __name__ == "__main__": # Safeguard against accidental imports
 		signal = input() # Execution will pause at this point until a messsage is recieved
 		playerId, event, payload = parseRecieveSignal(signal)
 		
-		if   event == "entered_player_select":
-			game.add_player(playerId)
+		if   event == "entered_player_select": # this signal is sent when the player has entered the player select screen
+			game.addPlayer(playerId)
 		elif event == "select_character":
-			game.select_character(playerId,payload["character"])
-		
-		#IS THIS RELEVANT TO BACKEND?
-		elif event == "entered_game":
+			game.selectSuspect(playerId,payload["character"])
+		elif event == "entered_game": # this signal is sent when the player has entered the board screen
 			game.enteredGame(playerId)
 		elif event == "start_game":
-			game.start_game()
+			game.startGame()
 		
 		elif event == "move_choice":
 			game.selectMove(playerId,payload["choice"])
-		
-		# EXPLANATION? 
 		elif event == "card_choice":
 			game.selectCard(playerId,payload["choice"])
 		elif event == "pass_turn":
-			game.end_turn(playerId)
+			game.passTurn(playerId)
 			
 		# SUGGESTION HANDLERS
 		elif event == "suggestion_start":
-			game.make_suggestion(playerId)
+			game.startSuggestion(playerId)
 		elif event == "suggestion_choice":
-			game.get_suggestion_options(playerId,payload["current_room"])
-		
-		
-		#TODO(MAY1
+			game.proposeSuggestion(playerId,payload["weapon"])
 		elif event == "suggestion_trial":
 			game.disproveSuggestion(playerId,payload["card"],payload["type"],payload["cannotDisprove"])
 		
 		# ACCUSATION HANDLERS
 		elif event == "accusation_start":
-			game.make_accusation(playerId)
+			game.startAccusation(playerId)
 		elif event == "accusation_choice":
-			game.get_accusation_options()
-		
-		#REMOVE ME there is no accusation trial, its part of make accusation
-		elif event == "accusation_trial": # TODO THIS MIGHT BE REDUNDANT BECAUSE OF CARD CHOICE
+			game.proposeAccusation(playerId,payload["weapon"],payload["room"])
+		elif event == "accusation_trial":
 			game.disproveAccusation(playerId,payload["card"],payload["type"],payload["cannotDisprove"])
 			
-
 		elif event == "disconnect":
-			game.remove_player(playerId)
+			game.removePlayer(playerId)
 		
