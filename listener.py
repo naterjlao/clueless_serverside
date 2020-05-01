@@ -133,6 +133,7 @@ if __name__ == "__main__": # Safeguard against accidental imports
 		
 		# Global signals
 		sendToAll("gamestate", gamestate)
+		sendToAll("gameboard", gameboard)
 		
 		# Player dependent signals
 		# We iterate through a list of dictionaries each containing
@@ -143,9 +144,11 @@ if __name__ == "__main__": # Safeguard against accidental imports
 		# If FORCE_UPDATE is False and the message has not been updated
 		# between it being sent or not, do not send the signal to that
 		# player.
+		''' CANDIDATE FOR DEPRECATION
 		for player in gameboard:
 			if FORCE_UPDATE or player[DIRTY]:
 				sendToPlayer(player[PLAYER_ID],'gameboard',player[PAYLOAD])
+		'''
 		for player in playerstates:
 			if FORCE_UPDATE or player[DIRTY]:
 				sendToPlayer(player[PLAYER_ID],'playerstate',player[PAYLOAD])
