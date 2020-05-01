@@ -122,7 +122,7 @@ if __name__ == "__main__": # Safeguard against accidental imports
 		#startinfo (handled in playerstate)
 		#availchars (handled in gamestate)
 		gamestate      = game.getGamestate()    		# For all (dict) # TODO who's turn, list of players, availableCharacters
-		gameboard      = game.getGameboard()    		# For all (dict)
+		gameboard      = game.getGameboard()    		# Player dependent (list of dicts)
 		playerstates   = game.getPlayerstates() 		# Player dependent (list of dicts)
 		moveoptions    = game.getMoveOptions()  		# Player dependent (list of dicts)
 		suggestOptions = game.getSuggestionOptions()	# Player dependent (list of dicts)
@@ -133,7 +133,6 @@ if __name__ == "__main__": # Safeguard against accidental imports
 		
 		# Global signals
 		sendToAll("gamestate", gamestate)
-		sendToAll("gameboard", gameboard)
 		
 		# Player dependent signals
 		# We iterate through a list of dictionaries each containing
@@ -144,6 +143,9 @@ if __name__ == "__main__": # Safeguard against accidental imports
 		# If FORCE_UPDATE is False and the message has not been updated
 		# between it being sent or not, do not send the signal to that
 		# player.
+		for player in gameboard:
+			if FORCE_UPDATE or player[DIRTY]:
+				sendToPlayer(player[PLAYER_ID],'gameboard',player[PAYLOAD])
 		for player in playerstates:
 			if FORCE_UPDATE or player[DIRTY]:
 				sendToPlayer(player[PLAYER_ID],'playerstate',player[PAYLOAD])
