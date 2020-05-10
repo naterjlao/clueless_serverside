@@ -58,20 +58,23 @@
 import json
 import sys
 sys.path.append('/opt/clueless/src/backend')
-from Server import Game
+from game import Game
 
 ################################################################################
-# STATIC GLOBAL VARIABLES
+# PAYLOAD SIGNATURE LABELS
 ################################################################################
 PLAYER_ID = 'playerId'
-EVENT = 'eventName' # NOTE - Javascript has 'event' as a reserved keyword!
-PAYLOAD = 'payload'
-MIN_PLAYER = 2
+EVENT     = 'eventName' # NOTE - Javascript has 'event' as a reserved keyword!
+PAYLOAD   = 'payload'
+DIRTY     = 'dirty'     # if TRUE - the status/payload has been modified on the backend
+						# only used if FORCE_UPDATE is False
 
 ################################################################################
-# DEBUG
+# SETTINGS
 ################################################################################
 DEBUG = True
+FORCE_UPDATE = True		# if True, player specific backend payloads are not checked
+						# if they are modified
 
 ################################################################################
 # AUXILIARY FUNCTIONS
@@ -92,185 +95,120 @@ def sendToPlayer(playerId,event,sendData):
 # Shoots <sendData> for the <event> to Serverside for all Clients
 def sendToAll(event,sendData):
 	sendToPlayer("all",event,sendData)
-	
-################################################################################
-# INSTANCE VARIABLES
-################################################################################
 
-# Stores the player IDs that sent the request
-playerIds = []
-
-# Flags for one-time signals TODO -- not the ideal solution
-game_ready_sent = False
-entered_player_select_sent = False
-game_started = False
-
-#### TODO --- THIS IS TEMPORARY replace with actual game objects ----- #######
-# Create variables that is stored at runtime for this process
-position = {"x":100,"y":100}
-current_turn = "player0" # set to the ID of the first Player entered
-#### TODO --- THIS IS TEMPORARY replace with actual game objects ----- #######
-
+# Accepts an input string signal from the Frontend and Serverside/main.js
+# Returns a tuple: (<playerId : string>, <signalEvent : string>,<payload : dict>)
+def parseRecieveSignal(signal):
+	signal = signal.strip()     # Remove any leading of trailing whitespace
+	signal = json.loads(signal) # Convert into a dictionary
+	return signal[PLAYER_ID], signal[EVENT], signal[PAYLOAD]
 
 ################################################################################
 # MAIN
 ################################################################################
 if __name__ == "__main__": # Safeguard against accidental imports
 
-
 	################################################################################
-	# GENERATE THE GAME INSTANCE
+	# INITIALIZE THE GAME INSTANCE
 	################################################################################
 	game = Game()
 
 	# Spinup a listener, this will be killed when the Serverside application is killed
 	while True:
 	
-		# TODO -- there is a case where there might be conflicting signals at the same time,
-		# TODO -- might need to implement an input buffer to handle these cases.
-		# TODO -- absolute worst case, multithreading might be needed
+		########################################################################
+		# OUTPUT SIGNALS (sent first and after every signal cycle)
+		########################################################################
+		#startinfo (handled in playerstate)
+		#availchars (handled in gamestate)
+		gamestate      = game.getGamestate()    		# For all (dict) # TODO who's turn, list of players, availableCharacters
+		gameboard      = game.getGameboard()    		# Player dependent (list of dicts)
+		playerstates   = game.getPlayerstates() 		# Player dependent (list of dicts)
+		moveoptions    = game.getMoveOptions()  		# Player dependent (list of dicts)
+		suggestOptions = game.getSuggestionOptions()	# Player dependent (list of dicts)
+		accuseOptions  = game.getAccusationOptions()	# Player dependent (list of dicts)
+		checklists     = game.getChecklists()   		# Player dependent (list of dicts)
+		cardlists      = game.getCardlists()    		# Player dependent (list of dicts)
+		messages       = game.getMessages()     		# Player dependent (list of dicts)
+		
+		# Global signals
+		sendToAll("gamestate", gamestate)
+		sendToAll("gameboard", gameboard)
+		
+		# Player dependent signals
+		# We iterate through a list of dictionaries each containing
+		# the target playerId.
+		# If FORCE_UPDATE is True (see above), then the signal is sent
+		# no matter what. Else, if the DIRTY key in each dictionary
+		# is set to True, we send the signal.
+		# If FORCE_UPDATE is False and the message has not been updated
+		# between it being sent or not, do not send the signal to that
+		# player.
+		''' CANDIDATE FOR DEPRECATION
+		for player in gameboard:
+			if FORCE_UPDATE or player[DIRTY]:
+				sendToPlayer(player[PLAYER_ID],'gameboard',player[PAYLOAD])
+		'''
+		for player in playerstates:
+			if FORCE_UPDATE or player[DIRTY]:
+				sendToPlayer(player[PLAYER_ID],'playerstate',player[PAYLOAD])
+		for player in moveoptions:
+			if FORCE_UPDATE or player[DIRTY]:
+				sendToPlayer(player[PLAYER_ID],'move_options',player[PAYLOAD])
+		for player in suggestOptions:
+			if FORCE_UPDATE or player[DIRTY]:
+				sendToPlayer(player[PLAYER_ID],'suggestion_options',player[PAYLOAD])
+		for player in accuseOptions:
+			if FORCE_UPDATE or player[DIRTY]:
+				sendToPlayer(player[PLAYER_ID],'accusation_options',player[PAYLOAD])
+		for player in checklists:
+			if FORCE_UPDATE or player[DIRTY]:
+				sendToPlayer(player[PLAYER_ID],'checklist',player[PAYLOAD])
+		for player in cardlists:
+			if FORCE_UPDATE or player[DIRTY]:
+				sendToPlayer(player[PLAYER_ID],'card_list',player[PAYLOAD])
+		for player in messages:
+			if FORCE_UPDATE or elem[DIRTY]:
+				sendToPlayer(player[PLAYER_ID],'message',player[PAYLOAD])
 	
 		########################################################################
-		# Get the RAW signal from the ServerSide
+		# Retrieve any signal that any Client sends and send to the Game
 		########################################################################
-		signal = input()
-		signal = signal.strip()
-		signal = json.loads(signal) # data is coverted to a dictionary
+		signal = input() # Execution will pause at this point until a messsage is recieved
+		playerId, event, payload = parseRecieveSignal(signal)
 		
-		########################################################################
-		# Strip out the metadata from the given RAW signal
-		########################################################################
-		playerId = signal[PLAYER_ID]
-		event = signal[EVENT]
-		if PAYLOAD in signal: # Guard against the event that no payload was given
-			payload = signal[PAYLOAD]
-		
-		# Add the player to the list of players registered in the game
-		# TODO, this thing's job is only to keep track of how many
-		# clients have CONNECTED in the game, this is potentially redundant.
-		if (not (playerId in playerIds)):
-			playerIds.append(playerId)
-		
-		# Event Signal Signatures
-		
-		# << FRONT -> BACK >>
-		# entered_game
-		# start_game
-		# move
-		# make_suggestion
-		# make_accusation
-		# pass_turn
-		# make_move
-		# select_suspect
-		# disconnect
-		
-		# << BACK -> FRONT >>
-		# startInfo
-		# position
-		# turnChange
-		
-		# Interface game functions from Server.py
-		# Game(self)
-		# Game.get_gamestateDict()
-		# Game.add_player(name)
-		# Game.start_game()
-		# Game.end_game()
-		# Game.make_move(name, suspect, room)
-		# Game.select_suspect(name, suspect)
-		# Game.make_suggestion(name, suspect, weapon, room)
-		# Game.respond_suggestion(player, card)
-		# Game.make_accusation(name, suspect, weapon, room)
-		# Game.end_turn(name)
-		
-		# TODO this is ugly and slow as hell, could use a hash or something
-		
-		# One time send of available characters TODO -- not ideal
-		if event == "entered_player_select" and not entered_player_select_sent:
-			available_characters = game.start_select_character()
-			sendToPlayer(playerId,'available_characters',available_characters)
-			entered_player_select_sent = True
-			
-		elif event == "entered_game":
-			sendToPlayer(playerId,'startInfo',{"player":playerId})
-			sendToAll("turnChange",{"turn":current_turn})
-			sendToPlayer(playerId,"position",{"position":position})
-		
-		elif event == "start_game":
-			game_started = True
-			game.start_game()
-		
-		# THIS IS TEMPORARY
-		elif event == "move":
-			# TODO This whole thing might be temp
-			# Fun fact, python3 does not support switches
-			if payload["direction"] == "left":
-				position["x"] = position["x"] - 5
-			if payload["direction"] == "right":
-				position["x"] = position["x"] + 5
-			if payload["direction"] == "up":
-				position["y"] = position["y"] - 5
-			if payload["direction"] == "down":
-				position["y"] = position["y"] + 5
-			sendToAll('position',{"position":position})
-		
-		elif event == "make_suggestion":
-			game.make_suggestion(playerId,payload["suspect"],payload["weapon"],payload["room"])
-			
-		elif event == "make_accusation":
-			game.make_accusation(playerId,payload["suspect"],payload["weapon"],payload["room"])
-		
-		elif event == "pass_turn":
-			game.end_turn(playerId)
-		
-		elif event == "make_move":
-			game.make_move(playerId,payload["suspect"],payload["room"])
-			# Return the list of rooms that is available to the player
-			#sendToPlayer(playerId,'move_options',{"move_options":game.check_move_options(payload["room"])})
-			
+		if   event == "entered_player_select": # this signal is sent when the player has entered the player select screen
+			game.addPlayer(playerId)
 		elif event == "select_character":
-			game.add_player(playerId)
-			game.select_character(playerId,payload["character"]) # select a character
+			game.selectSuspect(playerId,payload["character"])
+		elif event == "entered_game": # this signal is sent when the player has entered the board screen
+			game.enteredGame(playerId)
+		elif event == "start_game":
+			game.startGame()
+		
+		elif event == "move_choice":
+			game.selectMove(playerId,payload["choice"])
+		elif event == "card_choice":
+			game.selectCard(playerId,payload["choice"])
+		elif event == "pass_turn":
+			game.passTurn(playerId)
+			
+		# SUGGESTION HANDLERS
+		elif event == "suggestion_start":
+			game.startSuggestion(playerId)
+		elif event == "suggestion_choice":
+			game.proposeSuggestion(playerId,payload["weapon"])
+		elif event == "suggestion_trial":
+			game.disproveSuggestion(playerId,payload["card"],payload["type"],payload["cannotDisprove"])
+		
+		# ACCUSATION HANDLERS
+		elif event == "accusation_start":
+			game.startAccusation(playerId)
+		elif event == "accusation_choice":
+			game.proposeAccusation(playerId,payload["weapon"],payload["room"])
+		elif event == "accusation_trial":
+			game.disproveAccusation(playerId,payload["card"],payload["type"],payload["cannotDisprove"])
 			
 		elif event == "disconnect":
-			# TODO redundant code is redundant, should player management be handled in the ServerSide or Backend?
-			playerIds.remove(playerId)
-			game.end_game()
-			
-		# Once the minimal amount of clients has reached the server, send out game ready signal
-		if ((len(playerIds) >= MIN_PLAYER) and not game_ready_sent):
-			game_ready_sent = True
-			sendToPlayer(playerIds[0],'game_is_ready',{'placeholder':'nothing'}) # Assuming that the first player is the first element
-		
-		# Send out the game state at every cycle
-		#sendToPlayer(playerId,'turn_status',{'turn_status':game.check_turn_status()})
-		gamestate = game.get_gamestateDict()
-		# FIXME workaround of a workaround
-		if (gamestate["current_player"]).__class__ == dict:
-			cur_player = gamestate["current_player"]["user"]
-			if game_started:
-				sendToAll('turnUpdate',{"playerId":cur_player, "turn_status": gamestate["turn_status"],"move_options": game.check_move_options(game.get_suspect_current_space(cur_player).name)})
-		sendToAll('available_characters',game.start_select_character()) # TODO the thing its returning should be mutable???
-		sendToAll('update_gameState',gamestate)
-		
-		
-		'''
-		sendToAll('turnUpdate',{"playerId":cur_player, "turn_status": gamestate["turn_status"],"move_options": game.check_move_options(game.get_suspect_current_space(cur_player).name)})
-		
-		
-		sendtoPlayer('suggestion options',{"suspect": TODO ANY, "weapon": TODO ANY,"room": game.get_suspect_current_space(cur_player).name)})
-		
-		sendtoAll('suspect list', )
-		sendtoAll('weapons list', )
-
-
-		sendtoPlayer('card_hand', gamestate.["current_player"].card_hand
-
-
-		sendtoPlayer('check_list', gamestate.["current_player"].card_seen
-
-
-
-		'''
-		
-		
+			game.removePlayer(playerId)
 		
