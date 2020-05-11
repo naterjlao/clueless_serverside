@@ -197,7 +197,7 @@ if __name__ == "__main__": # Safeguard against accidental imports
 		elif event == "suggestion_start":
 			game.startSuggestion(playerId)
 		elif event == "suggestion_choice":
-			game.proposeSuggestion(playerId,payload["weapon"])
+			game.proposeSuggestion(playerId,payload["suspect"],payload["weapon"])
 		elif event == "suggestion_trial":
 			game.disproveSuggestion(playerId,payload["card"],payload["type"],payload["cannotDisprove"])
 		
