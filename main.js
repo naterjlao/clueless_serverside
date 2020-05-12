@@ -387,6 +387,12 @@ mainSocket.on('connection', player => {
 		sendToBackend(player.playerId,'accusation_choice',data);
 	});
 	
+	player.on('suggestion_trial', (data) => {
+		log("RECIEVED suggestion_trial SIGNAL",INCOMING_SIGNAL_LOG);
+		logReceivePayload(data)
+		sendToBackend(player.playerId,'suggestion_trial',data);
+	});
+	
 	player.on('card_choice', (data) => {
 		log("RECIEVED card_choice SIGNAL",INCOMING_SIGNAL_LOG);
 		logReceivePayload(data)

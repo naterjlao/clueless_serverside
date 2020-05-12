@@ -207,6 +207,7 @@ if __name__ == "__main__": # Safeguard against accidental imports
 		elif event == "accusation_choice":
 			game.proposeAccusation(playerId,payload["weapon"],payload["room"])
 		elif event == "accusation_trial":
+			# NOT USED
 			game.disproveAccusation(playerId,payload["card"],payload["type"],payload["cannotDisprove"])
 			
 		elif event == "disconnect":
